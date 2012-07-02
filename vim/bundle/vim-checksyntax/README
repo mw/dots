@@ -1,0 +1,49 @@
+The checksyntax plugin runs an external syntax checker for the current buffer 
+whenever the buffer is saved (by calling the |:CheckSyntax| command). Syntax 
+errors are managed as location or quickfix lists. If any syntax error occurs, 
+the |location-list| is opened (users can redefine |CheckSyntaxFail()| to change 
+this behaviour). You can use any |location-list| related command to navigate 
+the list of syntax errors.
+
+If vimscript #2584 is installed, lines containing syntax errors will be marked 
+with signs.
+
+As the plugin doesn't provide syntax checks by its own, the external 
+syntax checker has to be installed on your computer.
+
+By default, |:CheckSyntax| is mapped to <F5> (if not mapped already), 
+and automatically executed when saving the buffer. The |:CheckSyntax| 
+command takes one optional argument: the mode (default: &filetype).
+
+The following modes are pre-defined (syntax checking requires the 
+respective syntax checker software to be installed):
+
+    c, cpp :: Check syntax via splint
+    html :: Check syntax via tidy
+    javascript :: Check syntax via jsl or gjslint
+    java :: Check syntax via jlint or javaCheckstyle
+    lua :: Parse file (luac -p)
+    php  :: Check syntax (php -l)
+    phpp :: Parse a file (php -f) (alternative php checker)
+    python :: Check file with pyflakes
+    pylint :: Use the pylint compiler plugin (alternative python checker)
+    ruby :: Check syntax (ruby -c; no auto-checks)
+    tex, latex :: Parse file (chktex -q -v0; no auto-checks)
+    xml, docbk :: Check syntax via xmllint
+
+See |g:checksyntax| for a complete list. See |g:checksyntax| also for 
+how to define your own syntax checkers.
+
+This plugin was originally based on Klaus Horsten's php_console 
+(vimscript #779) and it is the successor of php_check_syntax.vim 
+(vimscript #1272). In opposition to php_console, it is not a php 
+ftplugin but a general solution for checking the syntax when saving a 
+file (using the appropriate interpreter, lint or whatsoever).
+
+
+-----------------------------------------------------------------------
+
+Status:  Works for me (there may be some minor quirks)
+Install: See http://github.com/tomtom/vimtlib/blob/master/INSTALL.TXT
+See http://github.com/tomtom for related plugins.
+

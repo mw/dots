@@ -1,0 +1,37 @@
+#!/bin/bash
+
+FILES="
+gitconfig
+gitignore
+screenrc
+vim
+vimrc
+Xdefaults
+xmonad
+xsession
+zsh
+zshrc
+"
+
+# Create symbolic links for all configuration files
+for file in $FILES
+do
+	SOURCE="$HOME/dots/$file"
+	TARGET="$HOME/.$file"
+
+	# Create backup file if the target already exists and is not a symlink
+	if [ -e "$TARGET" ] && [ ! -L "$TARGET" ]; then
+		echo "warning: $TARGET already exists; moving to $file.old"
+		mv "$TARGET" "$TARGET.old"
+	fi
+	case $OSTYPE in
+		darwin*)
+			ln -hnfsv "$SOURCE" "$TARGET"
+			;;
+		linux*)
+			ln -fnsv "$SOURCE" "$TARGET"
+			;;
+	esac
+done
+
+exit 0

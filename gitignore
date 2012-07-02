@@ -1,0 +1,9 @@
+.hg
+.~
+*.swp
+.svn
+CVS
+*.o
+*.a
+*.pyc
+*.class

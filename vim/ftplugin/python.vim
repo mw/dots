@@ -1,0 +1,10 @@
+setlocal tabstop=4
+setlocal softtabstop=4
+setlocal shiftwidth=4
+setlocal textwidth=79
+setlocal smarttab
+setlocal expandtab
+setlocal nosmartindent
+setlocal cindent
+setlocal cinoptions=:4(0u0w1
+setlocal cinwords=if,elif,else,for,while,try,except,finally,def,class

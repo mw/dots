@@ -1,0 +1,22 @@
+[user]
+name = Marc Winners
+email = marcwinners@gmail.com
+
+[alias]
+b = branch
+l = log --shortstat
+mg = merge
+st = status
+mod = status -s
+sr = !git stash && git svn rebase && git stash pop
+
+[color]
+ui = auto
+
+[core]
+excludesfile = ~/.gitignore
+editor = vim
+
+[merge]
+tool = vimdiff
+conflictstyle = diff3
