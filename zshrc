@@ -100,8 +100,14 @@ logcheck=30
 stty start ""
 stty stop ""
 
-for file (~/dots/zsh/*.{z,}sh(N))
+local zsh_path="$HOME/dots/zsh"
+for file ($zsh_path/*.{z,}sh(N))
     source $file
+
+local hostname=$(hostname)
+if [[ -f "$zsh_path/hosts/$hostname.zsh" ]]; then
+    source "$zsh_path/hosts/$hostname.zsh"
+fi
 
 if [[ -f .localenv.sh ]]; then
     source .localenv.sh
