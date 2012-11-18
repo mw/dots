@@ -94,6 +94,7 @@ let java_space_errors = 1
 if has("conceal")
     set conceallevel=2
     let g:tex_conceal="adgms"
+    let g:no_rust_conceal=1
 endif
 
 " folding
@@ -277,8 +278,8 @@ if has("autocmd")
     autocmd FileType sql setlocal omnifunc=sqlcomplete#Complete
     autocmd FileType html setlocal omnifunc=htmlcomplete#CompleteTags
     autocmd FileType java setlocal omnifunc=javacomplete#Complete
-    autocmd FileType c setlocal path+=/usr/include/**
-    autocmd FileType c setlocal path+=/usr/local/include/**
+    autocmd FileType c,cpp setlocal path+=/usr/include/**
+    autocmd FileType c,cpp setlocal path+=/usr/local/include/**
     autocmd FileType c,cpp let g:SuperTabContextDefaultCompletionType="<c-x><c-o>"
     autocmd FileType c,cpp let g:SuperTabCompletionType="<c-x><c-o>"
 
