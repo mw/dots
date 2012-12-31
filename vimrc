@@ -267,10 +267,10 @@ if has("autocmd")
     autocmd BufNewFile,BufRead *.as setlocal filetype=actionscript
     autocmd BufNewFile,BufRead *.txt setlocal filetype=txt
     autocmd BufNewFile,BufRead *.json setlocal filetype=json
-    autocmd BufNewFile,BufRead COMMIT_EDITMSG setlocal spell
     autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
     autocmd BufNewFile,BufRead SCons* setlocal filetype=scons
     autocmd FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
+    autocmd FileType gitcommit setlocal spell nocindent
     autocmd FileType haskell setlocal omnifunc=haskellcomplete#CompleteHaskell
     autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
     autocmd FileType xml setlocal omnifunc=xmlcomplete#CompleteTags

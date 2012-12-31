@@ -92,9 +92,9 @@ alias l='ls'
 alias s='ls'
 alias sl='ls'
 alias less='less -R'
-alias fn='find . -name'
 alias g='grep -RIsi --color'
 alias z='_z'
+fn() { find . -name "$**"; }
 
 logcheck=30
 stty start ""
