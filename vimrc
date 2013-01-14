@@ -256,6 +256,13 @@ let Tlist_Exit_OnlyWindow = 1
 
 nnoremap <silent> <Leader>t :TlistToggle<CR>
 
+if has("gui")
+    set guioptions=
+    " disable audio error bell in MacVim
+    set visualbell
+    set t_vb=
+endif
+
 " autocmds
 filetype plugin on
 filetype indent on
@@ -291,6 +298,8 @@ if has("autocmd")
 	autocmd BufEnter * call <SID>CheckForLastWindow()
     autocmd FileType qf setlocal wrap
     autocmd FileType c,cpp,cpp.c inoremap < <<C-R>=<SID>HeaderComplete()<CR>
+
+    autocmd BufNewFile,BufRead *.md setlocal filetype=markdown
 
     autocmd CursorMovedI * if pumvisible() == 0|pclose|endif
     autocmd InsertLeave * if pumvisible() == 0|pclose|endif
