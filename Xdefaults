@@ -13,7 +13,7 @@ urxvt*scrollTtyKeypress:true
 urxvt*loginShell:       false
 urxvt*secondaryScroll:  true
 
-urxvt.font:          xft:Inconsolata:size=9
+urxvt.font:          xft:Inconsolata:size=11
 !urxvt.font:          -misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso10646-1
 !urxvt.font:           -dec-terminal-bold-r-normal--14-140-75-75-c-80-iso8859-1
 !urxvt.font:          *-terminus-medium-*-16-*
