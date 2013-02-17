@@ -1,6 +1,30 @@
-" pathogen: load vim plugins
 filetype off
-call pathogen#infect()
+
+set rtp+=~/.vim/bundle/vundle
+call vundle#rc()
+
+Bundle 'gmarik/vundle'
+Bundle 'fholgado/minibufexpl.vim'
+Bundle 'godlygeek/csapprox'
+Bundle 'tpope/vim-fugitive'
+Bundle 'tpope/vim-repeat'
+Bundle 'tpope/vim-surround'
+Bundle 'FuzzyFinder'
+Bundle 'javacomplete'
+Bundle 'thinca/vim-guicolorscheme'
+Bundle 'L9'
+Bundle 'tomtom/quickfixsigns_vim'
+Bundle 'tomtom/tlib_vim'
+Bundle 'kana/vim-arpeggio'
+Bundle 'scrooloose/nerdcommenter'
+Bundle 'scrooloose/nerdtree'
+Bundle 'scrooloose/syntastic'
+Bundle 'Valloric/YouCompleteMe'
+Bundle 'git://git.wincent.com/command-t.git'
+Bundle 'MarcWeber/vim-addon-mw-utils.git'
+Bundle 'Lokaltog/vim-powerline'
+Bundle 'kshenoy/vim-signature'
+Bundle 'jnwhiteh/vim-golang'
 
 if &term =~ "screen"
     set t_#4=[d
@@ -77,14 +101,9 @@ set statusline+=%{synIDattr(synID(line('.'),col('.'),1),'name')}
 set statusline+=\ %c,%l/%L\ (%P)
 syntax on
 
-let g:clang_complete_auto = 0
-let g:clang_complete_copen = 1
-
 let g:CommandTCancelMap=["<ESC>", "<C-c>", "C-["]
 
-let g:SuperTabDefaultCompletionType = "context"
-let OmniCpp_DisplayMode = 1
-let OmniCpp_ShowPrototypeInAbbr = 1
+let g:ycm_global_ycm_extra_conf = "~/.vim/.ycm_extra_conf.py"
 
 let c_space_errors = 1
 let python_highlight_space_errors = 1
@@ -135,13 +154,18 @@ noremap <silent> <Leader>L :match ErrorMsg '\%>80v.\+'<cr>
 noremap <silent> <Leader>C :match<cr>
 
 " arpeggio plugin mappings
-call arpeggio#load()
-Arpeggio inoremap <silent> jk <ESC>
+function s:LoadArpeggio()
+   if exists(":Arpeggio")
+        Arpeggio inoremap <silent> jk <ESC>
+    endif
+endfunction
+autocmd VimEnter * call <SID>LoadArpeggio()
+
 nnoremap ,m :make<cr>
 
 " bufkill plugin
 let g:BufKillVerbose = 0
-nnoremap <silent> Q :BD<cr>
+nnoremap <silent> Q :BD!<cr>
 
 nnoremap <Leader><Leader> :set invpaste paste?<CR>
 nnoremap <Leader>n :set invnumber number?<CR>
@@ -272,7 +296,7 @@ if has("autocmd")
     autocmd BufNewFile,BufRead *.h setlocal filetype=c
     autocmd BufNewFile,BufRead *.mxml setlocal filetype=mxml
     autocmd BufNewFile,BufRead *.as setlocal filetype=actionscript
-    autocmd BufNewFile,BufRead *.txt setlocal filetype=txt
+    autocmd BufNewFile,BufRead *.txt setlocal filetype=text
     autocmd BufNewFile,BufRead *.json setlocal filetype=json
     autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
     autocmd BufNewFile,BufRead SCons* setlocal filetype=scons
@@ -287,10 +311,8 @@ if has("autocmd")
     autocmd FileType java setlocal omnifunc=javacomplete#Complete
     autocmd FileType c,cpp setlocal path+=/usr/include/**
     autocmd FileType c,cpp setlocal path+=/usr/local/include/**
-    autocmd FileType c,cpp let g:SuperTabContextDefaultCompletionType="<c-x><c-o>"
-    autocmd FileType c,cpp let g:SuperTabCompletionType="<c-x><c-o>"
 
-	autocmd FileType txt setlocal noci nocin noai nosi spell
+	autocmd FileType text setlocal noci nocin noai nosi spell
 	autocmd BufEnter *.py noremap <f2> :w\|!python %<cr>
     autocmd BufEnter *.{scm,lisp} setlocal lisp
 	autocmd BufNewFile mutt-* setlocal tw=76
