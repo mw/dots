@@ -25,6 +25,7 @@ Bundle 'MarcWeber/vim-addon-mw-utils.git'
 Bundle 'Lokaltog/vim-powerline'
 Bundle 'kshenoy/vim-signature'
 Bundle 'jnwhiteh/vim-golang'
+Bundle 'leafgarland/typescript-vim'
 
 if &term =~ "screen"
     set t_#4=[d
@@ -74,12 +75,14 @@ set nolazyredraw
 set wildchar=<TAB>
 set nocompatible
 set hidden
-set grepprg=grep\ -nH\ -RIis\ --exclude=tags\ --exclude=\\*.tab.c\ $*
+set grepprg=grep\ -nH\ -RIis\ --exclude=tags\ --exclude=doc\ --exclude=\\*.tab.c\ $*
 set wildmenu
 set wildmode=list:longest
 set background=light
 set winminheight=0
-set wildignore=*.o,*.obj,*.bak,*.exe,*.pyc,*.swp
+set wildignore=*.o,*.obj,*.bak,*.exe,*.pyc,*.swp,.git,.svn
+set wildignore+=doc/**,gui/doc/**,gui/install/**,portal/install/**,portal/doc/**
+set wildignore+=node_modules
 set wildignore+=*/CVS/
 set whichwrap=h,l,b,<,>,[,]
 set pastetoggle=<Insert>
@@ -102,13 +105,20 @@ set statusline+=\ %c,%l/%L\ (%P)
 syntax on
 
 let g:CommandTCancelMap=["<ESC>", "<C-c>", "C-["]
+let g:CommandTMaxFiles=40000
+let g:CommandTMaxDepth=40
 
 let g:ycm_global_ycm_extra_conf = "~/.vim/.ycm_extra_conf.py"
+let g:ycm_min_num_of_chars_for_completion = 8
 
 let c_space_errors = 1
 let python_highlight_space_errors = 1
 let python_highlight_all  = 1
 let java_space_errors = 1
+
+" Show trailing whitespace and spaces before a tab:
+highlight ExtraWhitespace ctermbg=black guibg=black
+match ExtraWhitespace /\s\+$\| \+\ze\t/
 
 if has("conceal")
     set conceallevel=2
@@ -154,7 +164,7 @@ noremap <silent> <Leader>L :match ErrorMsg '\%>80v.\+'<cr>
 noremap <silent> <Leader>C :match<cr>
 
 " arpeggio plugin mappings
-function s:LoadArpeggio()
+function! s:LoadArpeggio()
    if exists(":Arpeggio")
         Arpeggio inoremap <silent> jk <ESC>
     endif
@@ -293,7 +303,6 @@ filetype indent on
 
 if has("autocmd")
     autocmd BufNewFile,BufRead *.less setlocal filetype=less
-    autocmd BufNewFile,BufRead *.h setlocal filetype=c
     autocmd BufNewFile,BufRead *.mxml setlocal filetype=mxml
     autocmd BufNewFile,BufRead *.as setlocal filetype=actionscript
     autocmd BufNewFile,BufRead *.txt setlocal filetype=text
