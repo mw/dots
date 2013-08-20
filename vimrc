@@ -1,6 +1,7 @@
 filetype off
 
 set rtp+=~/.vim/bundle/vundle
+set rtp+=~/.vim/bundle/powerline/powerline/bindings/vim
 call vundle#rc()
 
 Bundle 'gmarik/vundle'
@@ -22,10 +23,13 @@ Bundle 'scrooloose/syntastic'
 Bundle 'Valloric/YouCompleteMe'
 Bundle 'git://git.wincent.com/command-t.git'
 Bundle 'MarcWeber/vim-addon-mw-utils.git'
-Bundle 'Lokaltog/vim-powerline'
 Bundle 'kshenoy/vim-signature'
 Bundle 'jnwhiteh/vim-golang'
 Bundle 'leafgarland/typescript-vim'
+Bundle 'marijnh/tern_for_vim'
+Bundle 'pangloss/vim-javascript'
+Bundle 'mbbill/undotree'
+Bundle 'Lokaltog/powerline'
 
 if &term =~ "screen"
     set t_#4=[d
@@ -147,6 +151,7 @@ let IspellLang = 'english'
 nnoremap ,s :source ~/.vimrc<CR>
 nnoremap ,v :edit ~/.vimrc<CR>
 nnoremap ,T :NERDTreeToggle<CR>
+nnoremap ,U :UndotreeToggle<CR>
 
 nnoremap <space> zz
 vnoremap <space> zz
@@ -278,18 +283,6 @@ let g:miniBufExplorerMoreThanOne=2
 let g:miniBufExplUseSingleClick=1
 let g:miniBufExplCheckDupeBufs=0
 
-" taglist options
-let Tlist_Ctags_Cmd = '/usr/bin/ctags'
-let Tlist_Use_Right_Window = 0
-let Tlist_cpp_settings = 'c++;c:classes;f:functions'
-let Tlist_c_settings = 'c;f:functions'
-let Tlist_WinWidth = 30
-let Tlist_Inc_Winwidth = 0
-let Tlist_Compact_Format = 1
-let Tlist_Exit_OnlyWindow = 1
-
-nnoremap <silent> <Leader>t :TlistToggle<CR>
-
 if has("gui")
     set guioptions=
     " disable audio error bell in MacVim
@@ -309,7 +302,6 @@ if has("autocmd")
     autocmd BufNewFile,BufRead *.json setlocal filetype=json
     autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
     autocmd BufNewFile,BufRead SCons* setlocal filetype=scons
-    autocmd FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
     autocmd FileType gitcommit setlocal spell nocindent
     autocmd FileType haskell setlocal omnifunc=haskellcomplete#CompleteHaskell
     autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
@@ -321,12 +313,12 @@ if has("autocmd")
     autocmd FileType c,cpp setlocal path+=/usr/include/**
     autocmd FileType c,cpp setlocal path+=/usr/local/include/**
 
-	autocmd FileType text setlocal noci nocin noai nosi spell
-	autocmd BufEnter *.py noremap <f2> :w\|!python %<cr>
+    autocmd FileType text,none setlocal noci nocin noai nosi spell
+    autocmd BufEnter *.py noremap <f2> :w\|!python %<cr>
     autocmd BufEnter *.{scm,lisp} setlocal lisp
-	autocmd BufNewFile mutt-* setlocal tw=76
-	autocmd BufNewFile *.{h,hpp} call <SID>InsertGates()
-	autocmd BufEnter * call <SID>CheckForLastWindow()
+    autocmd BufNewFile mutt-* setlocal tw=76
+    autocmd BufNewFile *.{h,hpp} call <SID>InsertGates()
+    autocmd BufEnter * call <SID>CheckForLastWindow()
     autocmd FileType qf setlocal wrap
     autocmd FileType c,cpp,cpp.c inoremap < <<C-R>=<SID>HeaderComplete()<CR>
 

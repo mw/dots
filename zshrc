@@ -80,7 +80,9 @@ HISTFILE=~/.history
 bindkey "\e[A" up-line-or-search
 bindkey "\e[B" down-line-or-search
 
-export PATH=~/bin:/usr/local/bin:$PATH
+export LANG=en_US.utf-8
+export LC_ALL=en_US.utf-8
+export PATH=~/bin:/usr/local/bin:/usr/local/share/npm/bin:$PATH
 export LD_LIBRARY_PATH=~/lib:$PATH
 export C_INCLUDE_PATH=~/include:$PATH
 export CXX_INCLUDE_PATH=~/include:$PATH
