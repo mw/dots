@@ -1,7 +1,6 @@
 filetype off
 
 set rtp+=~/.vim/bundle/vundle
-set rtp+=~/.vim/bundle/powerline/powerline/bindings/vim
 call vundle#rc()
 
 Bundle 'gmarik/vundle'
@@ -29,7 +28,7 @@ Bundle 'leafgarland/typescript-vim'
 Bundle 'marijnh/tern_for_vim'
 Bundle 'pangloss/vim-javascript'
 Bundle 'mbbill/undotree'
-Bundle 'Lokaltog/powerline'
+Bundle 'bling/vim-airline'
 
 if &term =~ "screen"
     set t_#4=[d
@@ -108,9 +107,17 @@ set statusline+=%{synIDattr(synID(line('.'),col('.'),1),'name')}
 set statusline+=\ %c,%l/%L\ (%P)
 syntax on
 
+let g:airline_theme = 'bubblegum'
+
 let g:CommandTCancelMap=["<ESC>", "<C-c>", "C-["]
 let g:CommandTMaxFiles=40000
 let g:CommandTMaxDepth=40
+
+let g:syntastic_python_checkers = ['pyflakes']
+let g:syntastic_javascript_checkers = ['jshint']
+let g:syntastic_html_tidy_ignore_errors = ['proprietary attribute',
+                                           \'discarding',
+                                           \'is not recognized']
 
 let g:ycm_global_ycm_extra_conf = "~/.vim/.ycm_extra_conf.py"
 let g:ycm_min_num_of_chars_for_completion = 8
