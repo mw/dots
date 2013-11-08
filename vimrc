@@ -29,6 +29,7 @@ Bundle 'marijnh/tern_for_vim'
 Bundle 'pangloss/vim-javascript'
 Bundle 'mbbill/undotree'
 Bundle 'bling/vim-airline'
+Bundle 'vim-scripts/fountain.vim'
 
 if &term =~ "screen"
     set t_#4=[d
@@ -321,6 +322,7 @@ if has("autocmd")
     autocmd FileType c,cpp setlocal path+=/usr/local/include/**
 
     autocmd FileType text,none setlocal noci nocin noai nosi spell
+    autocmd FileType fountain setlocal noci nocin noai nosi
     autocmd BufEnter *.py noremap <f2> :w\|!python %<cr>
     autocmd BufEnter *.{scm,lisp} setlocal lisp
     autocmd BufNewFile mutt-* setlocal tw=76
