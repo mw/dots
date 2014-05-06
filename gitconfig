@@ -19,6 +19,7 @@ ui = auto
 excludesfile = ~/.gitignore
 editor = vim
 ignorecase = false
+pager = less -x4
 
 [merge]
 tool = vimdiff

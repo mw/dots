@@ -7,6 +7,7 @@ Bundle 'gmarik/vundle'
 Bundle 'fholgado/minibufexpl.vim'
 Bundle 'godlygeek/csapprox'
 Bundle 'tpope/vim-fugitive'
+Bundle 'tpope/vim-dispatch'
 Bundle 'tpope/vim-repeat'
 Bundle 'tpope/vim-surround'
 Bundle 'FuzzyFinder'
@@ -23,12 +24,12 @@ Bundle 'Valloric/YouCompleteMe'
 Bundle 'git://git.wincent.com/command-t.git'
 Bundle 'MarcWeber/vim-addon-mw-utils.git'
 Bundle 'kshenoy/vim-signature'
-Bundle 'jnwhiteh/vim-golang'
 Bundle 'leafgarland/typescript-vim'
 Bundle 'marijnh/tern_for_vim'
 Bundle 'pangloss/vim-javascript'
 Bundle 'mbbill/undotree'
 Bundle 'bling/vim-airline'
+Bundle 'Blackrush/vim-gocode'
 
 if &term =~ "screen"
     set t_#4=[d
@@ -78,13 +79,15 @@ set nolazyredraw
 set wildchar=<TAB>
 set nocompatible
 set hidden
-set grepprg=grep\ -nH\ -RIis\ --exclude=tags\ --exclude=doc\ --exclude=\\*.tab.c\ $*
+set grepprg=grep\ -nH\ -RIs\ --exclude=install\ --exclude=build\ --exclude=tags\ --exclude=doc\ --exclude=\\*.tab.c\ $*
 set wildmenu
 set wildmode=list:longest
 set background=light
 set winminheight=0
 set wildignore=*.o,*.obj,*.bak,*.exe,*.pyc,*.swp,.git,.svn
 set wildignore+=doc/**,gui/doc/**,gui/install/**,portal/install/**,portal/doc/**
+set wildignore+=build
+set wildignore+=install
 set wildignore+=node_modules
 set wildignore+=*/CVS/
 set whichwrap=h,l,b,<,>,[,]
@@ -319,6 +322,7 @@ if has("autocmd")
     autocmd FileType java setlocal omnifunc=javacomplete#Complete
     autocmd FileType c,cpp setlocal path+=/usr/include/**
     autocmd FileType c,cpp setlocal path+=/usr/local/include/**
+    autocmd FileType go setlocal noexpandtab
 
     autocmd FileType text,none setlocal noci nocin noai nosi spell
     autocmd BufEnter *.py noremap <f2> :w\|!python %<cr>
