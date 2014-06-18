@@ -87,6 +87,7 @@ export LD_LIBRARY_PATH=~/lib:$PATH
 export C_INCLUDE_PATH=~/include:$PATH
 export CXX_INCLUDE_PATH=~/include:$PATH
 export STAGE=~/Code/depot/build/stage
+export GOPATH=~/Code/depot/vendor/golibs
 
 local WORDCHARS=${WORDCHARS//\//}
 

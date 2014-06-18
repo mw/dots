@@ -10,7 +10,9 @@ Bundle 'tpope/vim-fugitive'
 Bundle 'tpope/vim-dispatch'
 Bundle 'tpope/vim-repeat'
 Bundle 'tpope/vim-surround'
-Bundle 'FuzzyFinder'
+Bundle 'kien/ctrlp.vim'
+Bundle 'sgur/ctrlp-extensions.vim'
+Bundle 'ivalkeen/vim-ctrlp-tjump'
 Bundle 'javacomplete'
 Bundle 'thinca/vim-guicolorscheme'
 Bundle 'L9'
@@ -29,7 +31,7 @@ Bundle 'marijnh/tern_for_vim'
 Bundle 'pangloss/vim-javascript'
 Bundle 'mbbill/undotree'
 Bundle 'bling/vim-airline'
-Bundle 'Blackrush/vim-gocode'
+Bundle 'fatih/vim-go'
 Bundle 'vim-scripts/fountain.vim'
 
 if &term =~ "screen"
@@ -124,7 +126,9 @@ let g:syntastic_html_tidy_ignore_errors = ['proprietary attribute',
                                            \'is not recognized']
 
 let g:ycm_global_ycm_extra_conf = "~/.vim/.ycm_extra_conf.py"
-let g:ycm_min_num_of_chars_for_completion = 8
+let g:ycm_min_num_of_chars_for_completion = 6
+let g:ycm_enable_diagnostic_signs = 0
+let g:ycm_confirm_extra_conf = 0
 
 let c_space_errors = 1
 let python_highlight_space_errors = 1
@@ -189,10 +193,6 @@ autocmd VimEnter * call <SID>LoadArpeggio()
 
 nnoremap ,m :make<cr>
 
-" bufkill plugin
-let g:BufKillVerbose = 0
-nnoremap <silent> Q :BD!<cr>
-
 nnoremap <Leader><Leader> :set invpaste paste?<CR>
 nnoremap <Leader>n :set invnumber number?<CR>
 nnoremap ,w :call <SID>WrapToggle()<CR>
@@ -215,14 +215,15 @@ endfunction
 nnoremap j gj
 nnoremap k gk
 
-" fuzzyfinder functions
-nnoremap <silent> ,c :FufChangeList<CR>
-nnoremap <silent> ,b :FufBuffer<CR>
-nnoremap <silent> ,j :FufJumpList<CR>
-nnoremap <silent> ,Q :FufQuickfix<CR>
-nnoremap <silent> ,t :FufTag<CR>
-nnoremap <silent> ,h :FufHelp<CR>
-nnoremap <silent> <C-]> :FufTagWithCursorWord<CR>
+" ctrlp options and bindings
+let g:ctrlp_map=''
+let g:ctrlp_match_window='bottom,order:btt,min:1,max:10,results:10'
+
+nnoremap _<silent> ,c :CtrlPChange<CR>
+nnoremap <silent> ,b :CtrlPBuffer<CR>
+nnoremap <silent> ,t :CtrlPTag<CR>
+nnoremap <silent> ,u :CtrlPUndo<CR>
+nnoremap <silent> <C-]> :CtrlPtjump<CR>
 
 " command-t plugin
 nnoremap <silent> ,f :CommandT<CR>
@@ -243,9 +244,6 @@ vnoremap <Leader>g "hy:grep "<c-r>h" *<left><left><left>
 
 " open javadoc using word under cursor (requires surfraw and w3m)
 nnoremap <Leader>j :!sr javasun <c-r>=expand("<cword>")<cr> -t -browser=w3m<cr>
-
-nnoremap <C-n> :bn<cr>
-nnoremap <C-p> :bp<cr>
 
 nnoremap <silent> ,q :call <SID>WinType("quickfix")<cr>:cw<cr>
 nnoremap <silent> ,l :call <SID>WinType("location")<cr>:lw<cr>
@@ -293,6 +291,11 @@ let g:miniBufExplMaxHeight=5
 let g:miniBufExplorerMoreThanOne=2
 let g:miniBufExplUseSingleClick=1
 let g:miniBufExplCheckDupeBufs=0
+let g:miniBufExplCycleArround=1 " yes, it's really misspelled. jesus.
+
+nnoremap <silent> Q :MBEbd!<cr>
+nnoremap <C-n> :MBEbn<cr>
+nnoremap <C-p> :MBEbp<cr>
 
 if has("gui")
     set guioptions=

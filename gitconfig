@@ -21,6 +21,9 @@ editor = vim
 ignorecase = false
 pager = less -x4
 
+[diff]
+context = 12
+
 [merge]
 tool = vimdiff
 conflictstyle = diff3
