@@ -77,7 +77,7 @@ set autowrite
 set incsearch
 set mouse=a
 set mousehide
-set shiftround
+set noshiftround
 set nolazyredraw
 set wildchar=<TAB>
 set nocompatible
@@ -114,6 +114,7 @@ set statusline+=\ %c,%l/%L\ (%P)
 syntax on
 
 let g:airline_theme = 'bubblegum'
+let g:airline_powerline_fonts = 1
 
 let g:CommandTCancelMap=["<ESC>", "<C-c>", "C-["]
 let g:CommandTMaxFiles=40000
@@ -129,6 +130,13 @@ let g:ycm_global_ycm_extra_conf = "~/.vim/.ycm_extra_conf.py"
 let g:ycm_min_num_of_chars_for_completion = 6
 let g:ycm_enable_diagnostic_signs = 0
 let g:ycm_confirm_extra_conf = 0
+
+let g:go_fmt_command = "goimports"
+let g:go_highlight_functions = 1
+let g:go_highlight_methods = 1
+let g:go_highlight_structs = 1
+let g:go_highlight_operators = 1
+let g:go_highlight_build_constraints = 1
 
 let c_space_errors = 1
 let python_highlight_space_errors = 1

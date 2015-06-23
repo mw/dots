@@ -82,12 +82,10 @@ bindkey "\e[B" down-line-or-search
 
 export LANG=en_US.utf-8
 export LC_ALL=en_US.utf-8
-export PATH=~/bin:/usr/local/bin:/usr/local/share/npm/bin:$PATH
 export LD_LIBRARY_PATH=~/lib:$PATH
 export C_INCLUDE_PATH=~/include:$PATH
 export CXX_INCLUDE_PATH=~/include:$PATH
-export STAGE=~/Code/depot/build/stage
-export GOPATH=~/Code/depot/vendor/golibs
+export PATH=~/bin:/usr/local/bin:/usr/local/share/npm/bin:$GOPATH/bin:$PATH
 
 local WORDCHARS=${WORDCHARS//\//}
 
@@ -95,7 +93,7 @@ alias l='ls'
 alias s='ls'
 alias sl='ls'
 alias less='less -R'
-alias g='grep -RIsi --color'
+alias g='grep -Isi --color'
 alias z='_z'
 fn() { find . -name "$**"; }
 
@@ -121,6 +119,9 @@ function screen_set() {
         print -nR $'\033k'$1$'\033'\\$'\033]0;'$1$'\a'
     fi
 }
+
+
+source ~/dots/zsh/z.sh
 
 function preexec() {
     local -a cmd; cmd=(${(z)1})
