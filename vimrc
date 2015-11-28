@@ -33,6 +33,8 @@ Bundle 'mbbill/undotree'
 Bundle 'bling/vim-airline'
 Bundle 'fatih/vim-go'
 Bundle 'vim-scripts/fountain.vim'
+Bundle 'rust-lang/rust.vim'
+Bundle 'phildawes/racer'
 
 if &term =~ "screen"
     set t_#4=[d
