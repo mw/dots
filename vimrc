@@ -35,6 +35,8 @@ call minpac#add('fatih/vim-go')
 call minpac#add('vim-scripts/fountain.vim')
 call minpac#add('rust-lang/rust.vim')
 call minpac#add('phildawes/racer')
+call minpac#add('xolox/vim-misc')
+call minpac#add('xolox/vim-notes')
 
 if &term =~ "screen"
     set t_#4=[d
@@ -121,6 +123,8 @@ let g:airline_powerline_fonts = 1
 let g:CommandTCancelMap=["<ESC>", "<C-c>", "C-["]
 let g:CommandTMaxFiles=40000
 let g:CommandTMaxDepth=40
+
+let g:notes_directories = ['~/.notes/']
 
 let g:syntastic_python_checkers = ['pyflakes']
 let g:syntastic_javascript_checkers = ['jshint']
