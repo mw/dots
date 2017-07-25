@@ -85,9 +85,7 @@ export LC_ALL=en_US.utf-8
 export LD_LIBRARY_PATH=~/lib:$PATH
 export C_INCLUDE_PATH=~/include:$PATH
 export CXX_INCLUDE_PATH=~/include:$PATH
-export PATH=~/bin:/usr/local/bin:/usr/local/share/npm/bin:$GOPATH/bin:$PATH
-export STAGE=~/Code/depot/build/stage
-export GOPATH=~/Code/depot/vendor/golibs
+export PATH=~/bin:~/.cargo/bin:/usr/local/bin:/usr/local/share/npm/bin:$PATH
 export RUST_SRC_PATH=~/Vendor/rust/src/
 
 local WORDCHARS=${WORDCHARS//\//}
