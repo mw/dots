@@ -34,9 +34,14 @@ call minpac#add('vim-airline/vim-airline-themes')
 call minpac#add('fatih/vim-go')
 call minpac#add('vim-scripts/fountain.vim')
 call minpac#add('rust-lang/rust.vim')
-call minpac#add('phildawes/racer')
 call minpac#add('xolox/vim-misc')
 call minpac#add('xolox/vim-notes')
+call minpac#add('rhysd/vim-clang-format')
+call minpac#add('elzr/vim-json')
+call minpac#add('tpope/vim-jdaddy')
+call minpac#add('vim-airline/vim-airline-themes')
+call minpac#add('ludovicchabant/vim-gutentags')
+call minpac#add('racer-rust/vim-racer')
 
 if &term =~ "screen"
     set t_#4=[d
@@ -71,7 +76,7 @@ set history=4000
 set magic
 set report=0
 set shell=zsh
-colorscheme camo
+colorscheme inkpot
 set showmode
 set backup
 set writebackup
@@ -86,7 +91,7 @@ set nolazyredraw
 set wildchar=<TAB>
 set nocompatible
 set hidden
-set grepprg=grep\ -nH\ -RIs\ --exclude=install\ --exclude=build\ --exclude=tags\ --exclude=doc\ --exclude=\\*.tab.c\ $*
+set grepprg=rg\ -n\ -S\ $*
 set wildmenu
 set wildmode=list:longest
 set background=light
@@ -117,16 +122,20 @@ set statusline+=%{synIDattr(synID(line('.'),col('.'),1),'name')}
 set statusline+=\ %c,%l/%L\ (%P)
 syntax on
 
+let $RUST_SRC_PATH="/home/marc/.multirust/toolchains/stable-x86_64-unknown-linux-gnu/"
+
 let g:airline_theme = 'bubblegum'
 let g:airline_powerline_fonts = 1
 
 let g:CommandTCancelMap=["<ESC>", "<C-c>", "C-["]
-let g:CommandTMaxFiles=40000
+let g:CommandTMaxFiles=80000
 let g:CommandTMaxDepth=40
 
 let g:notes_directories = ['~/.notes/']
 
-let g:syntastic_python_checkers = ['pyflakes']
+let g:vim_json_syntax_conceal = 0
+
+let g:syntastic_python_checkers = ['pyflakes', 'pep8']
 let g:syntastic_javascript_checkers = ['jshint']
 let g:syntastic_html_tidy_ignore_errors = ['proprietary attribute',
                                            \'discarding',
@@ -143,6 +152,22 @@ let g:go_highlight_methods = 1
 let g:go_highlight_structs = 1
 let g:go_highlight_operators = 1
 let g:go_highlight_build_constraints = 1
+
+if !executable('ctags')
+    let g:gutentags_enabled = 0
+endif
+let g:gutentags_define_advanced_commands = 1
+let g:gutentags_generate_on_new = 0
+let g:gutentags_ctags_tagfile = '.tags'
+let g:gutentags_project_root = ['.tags', 'tags']
+let g:gutentags_file_list_command = {
+    \ 'markers': {
+        \ '.git': 'git ls-files -co --exclude-standard admin capture bridge lib htmlgui ipc installer go/src/extrahop',
+        \ },
+    \ }
+let g:gutentags_ctags_exclude = ['*.html', '*.css', '*.xml', '*.json',
+ \ 'htmlgui/src/vendor', 'linux', 'hopcloud', 'doc*', 'media',
+ \ 'htmlgui/assets', 'Makefile']
 
 let c_space_errors = 1
 let python_highlight_space_errors = 1
@@ -231,7 +256,8 @@ nnoremap k gk
 
 " ctrlp options and bindings
 let g:ctrlp_map=''
-let g:ctrlp_match_window='bottom,order:btt,min:1,max:10,results:10'
+let g:ctrlp_match_window='bottom,order:btt,min:1,max:50,results:50'
+let g:ctrlp_mruf_max=20
 
 nnoremap _<silent> ,c :CtrlPChange<CR>
 nnoremap <silent> ,b :CtrlPBuffer<CR>
@@ -264,7 +290,6 @@ nnoremap <silent> ,l :call <SID>WinType("location")<cr>:lw<cr>
 nnoremap ,n :cn<cr>
 nnoremap ,p :cp<cr>
 nnoremap ,o :!open %<.pdf<cr><cr>
-nnoremap <silent> ,C :!ctags -R --exclude=".*" > /dev/null 2>&1 &<cr>
 
 function! s:WinType(type)
     if a:type == "location"
@@ -305,7 +330,7 @@ let g:miniBufExplMaxHeight=5
 let g:miniBufExplorerMoreThanOne=2
 let g:miniBufExplUseSingleClick=1
 let g:miniBufExplCheckDupeBufs=0
-let g:miniBufExplCycleArround=1 " yes, it's really misspelled. jesus.
+let g:miniBufExplCycleArround=1
 
 nnoremap <silent> Q :MBEbd!<cr>
 nnoremap <C-n> :MBEbn<cr>
@@ -313,9 +338,7 @@ nnoremap <C-p> :MBEbp<cr>
 
 if has("gui")
     set guioptions=
-    " disable audio error bell in MacVim
-    set visualbell
-    set t_vb=
+    set guifont=Inconsolata\ 16
 endif
 
 " autocmds
@@ -330,7 +353,7 @@ if has("autocmd")
     autocmd BufNewFile,BufRead *.json setlocal filetype=json
     autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
     autocmd BufNewFile,BufRead SCons* setlocal filetype=scons
-    autocmd FileType gitcommit setlocal spell nocindent
+    autocmd FileType gitcommit setlocal spell nocindent tw=72
     autocmd FileType haskell setlocal omnifunc=haskellcomplete#CompleteHaskell
     autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
     autocmd FileType xml setlocal omnifunc=xmlcomplete#CompleteTags
