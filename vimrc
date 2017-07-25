@@ -1,40 +1,40 @@
 filetype off
 
-set rtp+=~/.vim/bundle/vundle
-call vundle#rc()
+packadd minpac
 
-Bundle 'gmarik/vundle'
-Bundle 'fholgado/minibufexpl.vim'
-Bundle 'godlygeek/csapprox'
-Bundle 'tpope/vim-fugitive'
-Bundle 'tpope/vim-dispatch'
-Bundle 'tpope/vim-repeat'
-Bundle 'tpope/vim-surround'
-Bundle 'kien/ctrlp.vim'
-Bundle 'sgur/ctrlp-extensions.vim'
-Bundle 'ivalkeen/vim-ctrlp-tjump'
-Bundle 'javacomplete'
-Bundle 'thinca/vim-guicolorscheme'
-Bundle 'L9'
-Bundle 'tomtom/quickfixsigns_vim'
-Bundle 'tomtom/tlib_vim'
-Bundle 'kana/vim-arpeggio'
-Bundle 'scrooloose/nerdcommenter'
-Bundle 'scrooloose/nerdtree'
-Bundle 'scrooloose/syntastic'
-Bundle 'Valloric/YouCompleteMe'
-Bundle 'git://git.wincent.com/command-t.git'
-Bundle 'MarcWeber/vim-addon-mw-utils.git'
-Bundle 'kshenoy/vim-signature'
-Bundle 'leafgarland/typescript-vim'
-Bundle 'marijnh/tern_for_vim'
-Bundle 'pangloss/vim-javascript'
-Bundle 'mbbill/undotree'
-Bundle 'bling/vim-airline'
-Bundle 'fatih/vim-go'
-Bundle 'vim-scripts/fountain.vim'
-Bundle 'rust-lang/rust.vim'
-Bundle 'phildawes/racer'
+call minpac#init()
+call minpac#add('k-takata/minpac', {'type': 'opt'})
+
+call minpac#add('fholgado/minibufexpl.vim')
+call minpac#add('godlygeek/csapprox')
+call minpac#add('tpope/vim-fugitive')
+call minpac#add('tpope/vim-dispatch')
+call minpac#add('tpope/vim-repeat')
+call minpac#add('tpope/vim-surround')
+call minpac#add('kien/ctrlp.vim')
+call minpac#add('sgur/ctrlp-extensions.vim')
+call minpac#add('ivalkeen/vim-ctrlp-tjump')
+call minpac#add('thinca/vim-guicolorscheme')
+call minpac#add('vim-scripts/L9')
+call minpac#add('tomtom/quickfixsigns_vim')
+call minpac#add('tomtom/tlib_vim')
+call minpac#add('kana/vim-arpeggio')
+call minpac#add('scrooloose/nerdcommenter')
+call minpac#add('scrooloose/nerdtree')
+call minpac#add('scrooloose/syntastic')
+call minpac#add('Valloric/YouCompleteMe')
+call minpac#add('git://git.wincent.com/command-t.git')
+call minpac#add('kshenoy/vim-signature')
+call minpac#add('leafgarland/typescript-vim')
+call minpac#add('marijnh/tern_for_vim')
+call minpac#add('pangloss/vim-javascript')
+call minpac#add('mbbill/undotree')
+call minpac#add('bling/vim-airline')
+call minpac#add('vim-airline/vim-airline-themes')
+call minpac#add('fatih/vim-go')
+call minpac#add('vim-scripts/fountain.vim')
+call minpac#add('rust-lang/rust.vim')
+call minpac#add('phildawes/racer')
 
 if &term =~ "screen"
     set t_#4=[d
@@ -69,7 +69,7 @@ set history=4000
 set magic
 set report=0
 set shell=zsh
-colorscheme inkpot
+colorscheme camo
 set showmode
 set backup
 set writebackup
