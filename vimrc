@@ -5,43 +5,30 @@ packadd minpac
 call minpac#init()
 call minpac#add('k-takata/minpac', {'type': 'opt'})
 
-call minpac#add('fholgado/minibufexpl.vim')
 call minpac#add('godlygeek/csapprox')
 call minpac#add('tpope/vim-fugitive')
 call minpac#add('tpope/vim-dispatch')
 call minpac#add('tpope/vim-repeat')
 call minpac#add('tpope/vim-surround')
-call minpac#add('kien/ctrlp.vim')
-call minpac#add('sgur/ctrlp-extensions.vim')
-call minpac#add('ivalkeen/vim-ctrlp-tjump')
-call minpac#add('thinca/vim-guicolorscheme')
-call minpac#add('vim-scripts/L9')
 call minpac#add('tomtom/quickfixsigns_vim')
 call minpac#add('tomtom/tlib_vim')
-call minpac#add('kana/vim-arpeggio')
 call minpac#add('scrooloose/nerdcommenter')
 call minpac#add('scrooloose/nerdtree')
-call minpac#add('scrooloose/syntastic')
 call minpac#add('Valloric/YouCompleteMe')
-call minpac#add('git://git.wincent.com/command-t.git')
 call minpac#add('kshenoy/vim-signature')
-call minpac#add('leafgarland/typescript-vim')
-call minpac#add('marijnh/tern_for_vim')
-call minpac#add('pangloss/vim-javascript')
 call minpac#add('mbbill/undotree')
-call minpac#add('bling/vim-airline')
-call minpac#add('vim-airline/vim-airline-themes')
-call minpac#add('fatih/vim-go')
 call minpac#add('vim-scripts/fountain.vim')
-call minpac#add('rust-lang/rust.vim')
-call minpac#add('xolox/vim-misc')
-call minpac#add('xolox/vim-notes')
-call minpac#add('rhysd/vim-clang-format')
-call minpac#add('elzr/vim-json')
-call minpac#add('tpope/vim-jdaddy')
-call minpac#add('vim-airline/vim-airline-themes')
+call minpac#add('w0rp/ale')
+call minpac#add('fatih/vim-go')
+call minpac#add('sheerun/vim-polyglot')
+call minpac#add('itchyny/lightline.vim')
+call minpac#add('junegunn/fzf')
+call minpac#add('junegunn/fzf.vim')
+call minpac#add('qpkorr/vim-bufkill')
 call minpac#add('ludovicchabant/vim-gutentags')
-call minpac#add('racer-rust/vim-racer')
+call minpac#add('Chiel92/vim-autoformat')
+call minpac#add('leafgarland/typescript-vim')
+call minpac#add('ianks/vim-tsx')
 
 if &term =~ "screen"
     set t_#4=[d
@@ -76,8 +63,6 @@ set history=4000
 set magic
 set report=0
 set shell=zsh
-colorscheme inkpot
-set showmode
 set backup
 set writebackup
 set backupdir=/tmp,.
@@ -99,9 +84,9 @@ set winminheight=0
 set wildignore=*.o,*.obj,*.bak,*.exe,*.pyc,*.swp,.git,.svn
 set wildignore+=doc/**,gui/doc/**,gui/install/**,portal/install/**,portal/doc/**
 set wildignore+=build
+set wildignore+=dist
 set wildignore+=install
 set wildignore+=node_modules
-set wildignore+=*/CVS/
 set whichwrap=h,l,b,<,>,[,]
 set pastetoggle=<Insert>
 set ignorecase
@@ -120,31 +105,29 @@ set statusline+=\ %{&fileformat})
 set statusline+=%=
 set statusline+=%{synIDattr(synID(line('.'),col('.'),1),'name')}
 set statusline+=\ %c,%l/%L\ (%P)
+set spelllang=en_us
+set noshowmode
 syntax on
 
-let $RUST_SRC_PATH="/home/marc/.multirust/toolchains/stable-x86_64-unknown-linux-gnu/"
+let g:rustfmt_autosave = 1
 
-let g:airline_theme = 'bubblegum'
-let g:airline_powerline_fonts = 1
+let g:lightline = {'colorscheme': 'wombat'}
 
-let g:CommandTCancelMap=["<ESC>", "<C-c>", "C-["]
-let g:CommandTMaxFiles=80000
-let g:CommandTMaxDepth=40
-
-let g:notes_directories = ['~/.notes/']
-
-let g:vim_json_syntax_conceal = 0
-
-let g:syntastic_python_checkers = ['pyflakes', 'pep8']
-let g:syntastic_javascript_checkers = ['jshint']
-let g:syntastic_html_tidy_ignore_errors = ['proprietary attribute',
-                                           \'discarding',
-                                           \'is not recognized']
+let g:ale_set_balloons = 1
+let g:ale_fixers = {}
+let g:ale_fixers['typescript'] = ['prettier']
+let g:ale_fixers['javascript'] = ['prettier']
+let g:ale_linters = {}
+let g:ale_linters['python'] = ['flake8 --max-line-length=80', 'pyls']
+let g:ale_linters['c'] = ['ccls']
+let g:ale_fix_on_save = 1
+let g:ale_javascript_prettier_use_local_config = 1
 
 let g:ycm_global_ycm_extra_conf = "~/.vim/.ycm_extra_conf.py"
 let g:ycm_min_num_of_chars_for_completion = 6
 let g:ycm_enable_diagnostic_signs = 0
 let g:ycm_confirm_extra_conf = 0
+let g:ycm_autoclose_preview_window_after_completion=1
 
 let g:go_fmt_command = "goimports"
 let g:go_highlight_functions = 1
@@ -153,44 +136,39 @@ let g:go_highlight_structs = 1
 let g:go_highlight_operators = 1
 let g:go_highlight_build_constraints = 1
 
+let c_space_errors = 1
+let python_highlight_space_errors = 1
+let python_highlight_all  = 1
+let java_space_errors = 1
+
+colorscheme camo
+highlight clear SignColumn
+
+" Show trailing whitespace and spaces before a tab:
+highlight ExtraWhitespace ctermbg=black guibg=black
+match ExtraWhitespace /\s\+$\| \+\ze\t/
+
+let hostfile = $HOME . '/.vim/hosts/' . hostname() . '.vim'
+if filereadable(hostfile)
+    exe 'source ' . hostfile
+endif
+
+let g:autoformat_autoindent = 0
+let g:autoformat_retab = 0
+let g:autoformat_remove_trailing_spaces = 0
+
 if !executable('ctags')
     let g:gutentags_enabled = 0
 endif
 let g:gutentags_define_advanced_commands = 1
 let g:gutentags_generate_on_new = 0
 let g:gutentags_ctags_tagfile = '.tags'
-let g:gutentags_project_root = ['.tags', 'tags']
+let g:gutentags_project_root = ['.tags']
 let g:gutentags_file_list_command = {
     \ 'markers': {
-        \ '.git': 'git ls-files -co --exclude-standard admin capture bridge lib htmlgui ipc installer go/src/extrahop',
+        \ '.git': 'git ls-files -co --exclude-standard',
         \ },
     \ }
-let g:gutentags_ctags_exclude = ['*.html', '*.css', '*.xml', '*.json',
- \ 'htmlgui/src/vendor', 'linux', 'hopcloud', 'doc*', 'media',
- \ 'htmlgui/assets', 'Makefile']
-
-let c_space_errors = 1
-let python_highlight_space_errors = 1
-let python_highlight_all  = 1
-let java_space_errors = 1
-
-" Show trailing whitespace and spaces before a tab:
-highlight ExtraWhitespace ctermbg=black guibg=black
-match ExtraWhitespace /\s\+$\| \+\ze\t/
-
-if has("conceal")
-    set conceallevel=2
-    let g:tex_conceal="adgms"
-    let g:no_rust_conceal=1
-endif
-
-" folding
-set foldenable
-set foldmarker={,}
-set foldmethod=marker
-set foldtext=substitute(getline(v:foldstart),'{.*','{...}','')
-set foldcolumn=0
-set foldlevelstart=100
 
 if exists("+undofile")
     set undodir=~/.vim/undo
@@ -198,8 +176,6 @@ if exists("+undofile")
     set undolevels=8000
     set undoreload=30000
 endif
-
-let IspellLang = 'english'
 
 " keybindings
 nnoremap ,s :source ~/.vimrc<CR>
@@ -222,19 +198,14 @@ noremap :W :w
 noremap <silent> <Leader>L :match ErrorMsg '\%>80v.\+'<cr>
 noremap <silent> <Leader>C :match<cr>
 
-" arpeggio plugin mappings
-function! s:LoadArpeggio()
-   if exists(":Arpeggio")
-        Arpeggio inoremap <silent> jk <ESC>
-    endif
-endfunction
-autocmd VimEnter * call <SID>LoadArpeggio()
-
+nnoremap ,M :set makeprg=<c-r>=&makeprg<cr>
 nnoremap ,m :make<cr>
 
 nnoremap <Leader><Leader> :set invpaste paste?<CR>
 nnoremap <Leader>n :set invnumber number?<CR>
 nnoremap ,w :call <SID>WrapToggle()<CR>
+nnoremap ,r :ALEFindReferences<CR>
+nnoremap ,d :ALEGoToDefinition<CR>
 
 function! s:WrapToggle()
     set invwrap wrap?
@@ -254,20 +225,16 @@ endfunction
 nnoremap j gj
 nnoremap k gk
 
-" ctrlp options and bindings
-let g:ctrlp_map=''
-let g:ctrlp_match_window='bottom,order:btt,min:1,max:50,results:50'
-let g:ctrlp_mruf_max=20
+command! -bang -nargs=? -complete=dir Files
+  \ call fzf#vim#files(<q-args>, fzf#vim#with_preview(), <bang>0)
 
-nnoremap _<silent> ,c :CtrlPChange<CR>
-nnoremap <silent> ,b :CtrlPBuffer<CR>
-nnoremap <silent> ,t :CtrlPTag<CR>
-nnoremap <silent> ,u :CtrlPUndo<CR>
-nnoremap <silent> <C-]> :CtrlPtjump<CR>
+command! -bang -nargs=? -complete=dir GFiles
+  \ call fzf#vim#gitfiles(<q-args>, fzf#vim#with_preview(), <bang>0)
 
-" command-t plugin
-nnoremap <silent> ,f :CommandT<CR>
-nnoremap <silent> ,F :CommandTFlush<CR>
+nnoremap <silent> ,b :Buffers<CR>
+nnoremap <silent> ,t :Tags<CR>
+nnoremap <silent> ,f :Files<CR>
+nnoremap <silent> ,g :GFiles<CR>
 
 noremap <C-Z> :shell<CR>
 
@@ -281,15 +248,9 @@ vnoremap <Leader>F "hy:%s/<c-r>=escape("<c-r>h", "\\\/")<cr>//gcI<left><left><le
 " grep
 nnoremap <Leader>g :grep "<c-r>=expand("<cword>")<cr>" *<left><left><left>
 vnoremap <Leader>g "hy:grep "<c-r>h" *<left><left><left>
-
-" open javadoc using word under cursor (requires surfraw and w3m)
-nnoremap <Leader>j :!sr javasun <c-r>=expand("<cword>")<cr> -t -browser=w3m<cr>
-
 nnoremap <silent> ,q :call <SID>WinType("quickfix")<cr>:cw<cr>
-nnoremap <silent> ,l :call <SID>WinType("location")<cr>:lw<cr>
 nnoremap ,n :cn<cr>
 nnoremap ,p :cp<cr>
-nnoremap ,o :!open %<.pdf<cr><cr>
 
 function! s:WinType(type)
     if a:type == "location"
@@ -324,21 +285,15 @@ cnoremap  <c-W>
 inoremap Â <S-Left>
 inoremap Æ <S-Right>
 inoremap  <c-W>
-
-" minibufexplorer options
-let g:miniBufExplMaxHeight=5
-let g:miniBufExplorerMoreThanOne=2
-let g:miniBufExplUseSingleClick=1
-let g:miniBufExplCheckDupeBufs=0
-let g:miniBufExplCycleArround=1
-
-nnoremap <silent> Q :MBEbd!<cr>
-nnoremap <C-n> :MBEbn<cr>
-nnoremap <C-p> :MBEbp<cr>
+nnoremap <silent> Q :BD!<cr>
+nnoremap <C-n> :bn<cr>
+nnoremap <C-p> :bp<cr>
 
 if has("gui")
     set guioptions=
-    set guifont=Inconsolata\ 16
+    " disable audio error bell in MacVim
+    set visualbell
+    set t_vb=
 endif
 
 " autocmds
@@ -346,65 +301,17 @@ filetype plugin on
 filetype indent on
 
 if has("autocmd")
-    autocmd BufNewFile,BufRead *.less setlocal filetype=less
-    autocmd BufNewFile,BufRead *.mxml setlocal filetype=mxml
-    autocmd BufNewFile,BufRead *.as setlocal filetype=actionscript
     autocmd BufNewFile,BufRead *.txt setlocal filetype=text
-    autocmd BufNewFile,BufRead *.json setlocal filetype=json
-    autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
-    autocmd BufNewFile,BufRead SCons* setlocal filetype=scons
-    autocmd FileType gitcommit setlocal spell nocindent tw=72
-    autocmd FileType haskell setlocal omnifunc=haskellcomplete#CompleteHaskell
-    autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
-    autocmd FileType xml setlocal omnifunc=xmlcomplete#CompleteTags
-    autocmd FileType rb setlocal omnifunc=rubycomplete#Complete
-    autocmd FileType sql setlocal omnifunc=sqlcomplete#Complete
-    autocmd FileType html setlocal omnifunc=htmlcomplete#CompleteTags
-    autocmd FileType java setlocal omnifunc=javacomplete#Complete
+    autocmd BufNewFile,BufRead *.md setlocal filetype=markdown
+    autocmd FileType gitcommit setlocal spell nocindent
     autocmd FileType c,cpp setlocal path+=/usr/include/**
     autocmd FileType c,cpp setlocal path+=/usr/local/include/**
     autocmd FileType go setlocal noexpandtab
-
-    autocmd FileType text,none setlocal noci nocin noai nosi spell
+    autocmd FileType markdown,text,none setlocal noci nocin noai nosi spell
     autocmd FileType fountain setlocal noci nocin noai nosi
-    autocmd BufEnter *.py noremap <f2> :w\|!python %<cr>
-    autocmd BufEnter *.{scm,lisp} setlocal lisp
-    autocmd BufNewFile mutt-* setlocal tw=76
-    autocmd BufNewFile *.{h,hpp} call <SID>InsertGates()
-    autocmd BufEnter * call <SID>CheckForLastWindow()
     autocmd FileType qf setlocal wrap
-    autocmd FileType c,cpp,cpp.c inoremap < <<C-R>=<SID>HeaderComplete()<CR>
-
-    autocmd BufNewFile,BufRead *.md setlocal filetype=markdown
-
-    autocmd CursorMovedI * if pumvisible() == 0|pclose|endif
-    autocmd InsertLeave * if pumvisible() == 0|pclose|endif
+    autocmd BufNewFile *.{h,hpp} call <SID>InsertGates()
 endif
-
-function! s:HeaderComplete()
-    let linestart = getline(".")[0 : col(".") - 2]
-    let hpos = stridx(getline("."), "<")
-
-    if linestart =~ "#include\\s*<\\s*"
-        if !exists("g:header_list")
-            " get all headers, filter out directories, then strip the
-            " /usr/include/ and /usr/include/c++/{version} prefixes
-            let g:header_list = map(filter(split(globpath('/usr/include/,/usr/local/include/', '**/*')),
-                        \ '!isdirectory(v:val)'),
-                        \ 'substitute(v:val, "/usr/include\\(/c++/\\(\\d.\\)*\\d\\)*/", "", "")')
-        endif
-        let prefix = getline(".")[hpos+2:]
-
-        " filter headers by matching prefix
-        let match_list = filter(g:header_list, 'v:val =~ prefix . ".*$"')
-
-        call complete(hpos+2, match_list)
-        " return <c-p> so that first match text is not inserted
-        return "\<c-p>"
-    else
-        return ''
-    endif
-endfunction
 
 " allows gf command to open python modules from import commands
 if has('python')
@@ -418,33 +325,11 @@ for p in sys.path:
 EOF
 endif
 
-" simple mappings for running projects
-let g:projruncmd = ""
-nnoremap ,R :call <SID>PromptRun()<CR>
-nnoremap ,r :!%< <CR>
-
-nnoremap ,M :set makeprg=<c-r>=&makeprg<cr>
-
-function! s:PromptRun()
-    let g:projruncmd = input("run command: ", g:projruncmd, "shellcmd")
-    nnoremap ,r :!<c-r>=g:projruncmd<CR><CR>
-endfunction
-
-function! s:CheckForLastWindow()
-    " if the window is quickfix go on
-    if &buftype=="quickfix"
-        " if this window is last on screen, quit without warning
-        if winbufnr(2) == -1
-            quit!
-        endif
-    endif
-endfunction
-
 " add include guards for new header files
 function! s:InsertGates()
-        let gatename = substitute(toupper(expand("%:t")), "\\.", "_", "g")
-        execute "normal i#ifndef " . gatename
-        execute "normal o#define " . gatename
-        execute "normal Go#endif /* " . gatename . " */"
-        normal kk
+    let gatename = substitute(toupper(expand("%:t")), "\\.", "_", "g")
+    execute "normal i#ifndef " . gatename
+    execute "normal o#define " . gatename
+    execute "normal Go#endif /* " . gatename . " */"
+    normal kk
 endfunction

@@ -1,13 +1,14 @@
 #!/bin/bash
 
 FILES="
+config/alacritty
 gitconfig
 gitignore
 screenrc
+tmux.conf
 vim
 vimrc
 Xdefaults
-xmonad
 xsession
 zsh
 zshrc
