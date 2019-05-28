@@ -91,7 +91,7 @@ set whichwrap=h,l,b,<,>,[,]
 set pastetoggle=<Insert>
 set ignorecase
 set nojoinspaces
-set textwidth=79
+set textwidth=80
 set formatoptions=tcroqn
 set complete -=k complete+=k
 set completeopt=menuone,longest,preview
@@ -141,7 +141,7 @@ let python_highlight_space_errors = 1
 let python_highlight_all  = 1
 let java_space_errors = 1
 
-colorscheme camo
+colorscheme seoul256
 highlight clear SignColumn
 
 " Show trailing whitespace and spaces before a tab:
@@ -225,16 +225,53 @@ endfunction
 nnoremap j gj
 nnoremap k gk
 
-command! -bang -nargs=? -complete=dir Files
+function! s:build_quickfix_list(lines)
+  call setqflist(map(copy(a:lines), '{ "filename": v:val }'))
+  copen
+  cc
+endfunction
+
+let g:fzf_action = {
+  \ 'ctrl-q': function('s:build_quickfix_list'),
+  \ 'ctrl-o': 'open',
+  \ 'ctrl-x': 'split',
+  \ 'ctrl-v': 'vsplit' }
+
+let $FZF_DEFAULT_OPTS = '--bind ctrl-a:select-all'
+let $FZF_DEFAULT_COMMAND = 'fd --type f --hidden --follow --exclude .git'
+command! -nargs=? -complete=dir Files
   \ call fzf#vim#files(<q-args>, fzf#vim#with_preview(), <bang>0)
 
-command! -bang -nargs=? -complete=dir GFiles
+command! -nargs=? -complete=dir GFiles
   \ call fzf#vim#gitfiles(<q-args>, fzf#vim#with_preview(), <bang>0)
+
+function! s:line_handler(l)
+  let keys = split(a:l, ': ')
+  exec 'buf' keys[0]
+  exec keys[1]
+  normal! ^zz
+endfunction
+
+function! s:buffer_lines()
+  let res = []
+  for b in filter(range(1, bufnr('$')), 'buflisted(v:val)')
+    call extend(res, map(getbufline(b,0,"$"), 'b . ": " . (v:key + 1) . ": " . v:val '))
+  endfor
+  return res
+endfunction
+
+command! FZFLines call fzf#run({
+\   'source':  <sid>buffer_lines(),
+\   'sink':    function('<sid>line_handler'),
+\   'options': '--extended --nth=3..',
+\   'down':    '60%'
+\})
 
 nnoremap <silent> ,b :Buffers<CR>
 nnoremap <silent> ,t :Tags<CR>
 nnoremap <silent> ,f :Files<CR>
 nnoremap <silent> ,g :GFiles<CR>
+nnoremap <silent> ,l :FZFLines<CR>
 
 noremap <C-Z> :shell<CR>
 
@@ -246,8 +283,8 @@ vnoremap <Leader>f "hy:%s/<c-r>=escape("<c-r>h", "\\\/")<cr>//gc<left><left><lef
 vnoremap <Leader>F "hy:%s/<c-r>=escape("<c-r>h", "\\\/")<cr>//gcI<left><left><left><left>
 
 " grep
-nnoremap <Leader>g :grep "<c-r>=expand("<cword>")<cr>" *<left><left><left>
-vnoremap <Leader>g "hy:grep "<c-r>h" *<left><left><left>
+nnoremap <Leader>g :Rg <c-r>=expand("<cword>")<cr>
+vnoremap <Leader>g "hy:Rg <c-r>h<cr>
 nnoremap <silent> ,q :call <SID>WinType("quickfix")<cr>:cw<cr>
 nnoremap ,n :cn<cr>
 nnoremap ,p :cp<cr>
@@ -307,6 +344,7 @@ if has("autocmd")
     autocmd FileType c,cpp setlocal path+=/usr/include/**
     autocmd FileType c,cpp setlocal path+=/usr/local/include/**
     autocmd FileType go setlocal noexpandtab
+    autocmd BufWrite c,cpp :Autoformat
     autocmd FileType markdown,text,none setlocal noci nocin noai nosi spell
     autocmd FileType fountain setlocal noci nocin noai nosi
     autocmd FileType qf setlocal wrap

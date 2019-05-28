@@ -1,6 +1,6 @@
 alias g='grep -Isi --color'
-alias ls='ls --color'
-export PATH=$PATH:~/Code/engtools/
+alias ls='exa'
+export PATH=$PATH:~/Code/engtools/exreview
 export PATH=~/.go/bin:/usr/local/go/bin/:$PATH
 export STAGE=~/Code/depot/build/stage
 export GOPATH=~/.go:~/Code/depot/vendor/golibs:~/Code/depot/extrahop/go
