@@ -24,6 +24,7 @@ call minpac#add('sheerun/vim-polyglot')
 call minpac#add('itchyny/lightline.vim')
 call minpac#add('junegunn/fzf')
 call minpac#add('junegunn/fzf.vim')
+call minpac#add('junegunn/seoul256.vim')
 call minpac#add('qpkorr/vim-bufkill')
 call minpac#add('ludovicchabant/vim-gutentags')
 call minpac#add('Chiel92/vim-autoformat')
@@ -107,6 +108,7 @@ set statusline+=%{synIDattr(synID(line('.'),col('.'),1),'name')}
 set statusline+=\ %c,%l/%L\ (%P)
 set spelllang=en_us
 set noshowmode
+set directory=$HOME/.vim/swap
 syntax on
 
 let g:rustfmt_autosave = 1
