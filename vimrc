@@ -1,35 +1,28 @@
 filetype off
 
-packadd minpac
+call plug#begin('~/.vim/plugged')
 
-call minpac#init()
-call minpac#add('k-takata/minpac', {'type': 'opt'})
+Plug 'tpope/vim-fugitive'
+Plug 'tomtom/quickfixsigns_vim'
+Plug 'tomtom/tlib_vim'
+Plug 'scrooloose/nerdcommenter'
+Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
+Plug 'kshenoy/vim-signature'
+Plug 'mbbill/undotree'
+Plug 'vim-scripts/fountain.vim'
+Plug 'itchyny/lightline.vim'
+Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+Plug 'junegunn/fzf.vim'
+Plug 'qpkorr/vim-bufkill'
+Plug 'ludovicchabant/vim-gutentags'
+Plug 'Chiel92/vim-autoformat'
+Plug 'leafgarland/typescript-vim'
+Plug 'ianks/vim-tsx'
+Plug 'neoclide/coc.nvim', { 'branch': 'release' }
+Plug 'machakann/vim-sandwich'
+Plug 'triglav/vim-visual-increment'
 
-call minpac#add('godlygeek/csapprox')
-call minpac#add('tpope/vim-fugitive')
-call minpac#add('tpope/vim-dispatch')
-call minpac#add('tpope/vim-repeat')
-call minpac#add('tpope/vim-surround')
-call minpac#add('tomtom/quickfixsigns_vim')
-call minpac#add('tomtom/tlib_vim')
-call minpac#add('scrooloose/nerdcommenter')
-call minpac#add('scrooloose/nerdtree')
-call minpac#add('Valloric/YouCompleteMe')
-call minpac#add('kshenoy/vim-signature')
-call minpac#add('mbbill/undotree')
-call minpac#add('vim-scripts/fountain.vim')
-call minpac#add('w0rp/ale')
-call minpac#add('fatih/vim-go')
-call minpac#add('sheerun/vim-polyglot')
-call minpac#add('itchyny/lightline.vim')
-call minpac#add('junegunn/fzf')
-call minpac#add('junegunn/fzf.vim')
-call minpac#add('junegunn/seoul256.vim')
-call minpac#add('qpkorr/vim-bufkill')
-call minpac#add('ludovicchabant/vim-gutentags')
-call minpac#add('Chiel92/vim-autoformat')
-call minpac#add('leafgarland/typescript-vim')
-call minpac#add('ianks/vim-tsx')
+call plug#end()
 
 if &term =~ "screen"
     set t_#4=[d
@@ -39,14 +32,13 @@ endif
 " preferences
 set backspace=2
 set t_Co=256
-set autoindent
-set cindent
-set cinoptions=:0t0j1(0u0w1
 set tenc=utf-8
 set enc=utf-8
 set showmatch
 set ruler
 set showcmd
+set updatetime=300
+set shortmess+=c
 set laststatus=2
 set tabstop=4
 set shiftwidth=4
@@ -80,7 +72,6 @@ set hidden
 set grepprg=rg\ -n\ -S\ $*
 set wildmenu
 set wildmode=list:longest
-set background=light
 set winminheight=0
 set wildignore=*.o,*.obj,*.bak,*.exe,*.pyc,*.swp,.git,.svn
 set wildignore+=doc/**,gui/doc/**,gui/install/**,portal/install/**,portal/doc/**
@@ -88,6 +79,7 @@ set wildignore+=build
 set wildignore+=dist
 set wildignore+=install
 set wildignore+=node_modules
+set wildignore+=.ccls-cache
 set whichwrap=h,l,b,<,>,[,]
 set pastetoggle=<Insert>
 set ignorecase
@@ -98,6 +90,7 @@ set complete -=k complete+=k
 set completeopt=menuone,longest,preview
 set viminfo-=! viminfo+=!
 set sessionoptions=buffers
+set signcolumn=yes
 set statusline=%f
 set statusline+=\ %h%m%r%w
 set statusline+=\ (%{strlen(&ft)?&ft:'none'}
@@ -111,32 +104,20 @@ set noshowmode
 set directory=$HOME/.vim/swap
 syntax on
 
-let g:rustfmt_autosave = 1
+" Use tab for trigger completion with characters ahead and navigate.
+" Use command ':verbose imap <tab>' to make sure tab is not mapped by other plugin.
+inoremap <silent><expr> <TAB>
+      \ pumvisible() ? "\<C-n>" :
+      \ <SID>check_back_space() ? "\<TAB>" :
+      \ coc#refresh()
+inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+
+function! s:check_back_space() abort
+  let col = col('.') - 1
+  return !col || getline('.')[col - 1]  =~# '\s'
+endfunction
 
 let g:lightline = {'colorscheme': 'wombat'}
-
-let g:ale_set_balloons = 1
-let g:ale_fixers = {}
-let g:ale_fixers['typescript'] = ['prettier']
-let g:ale_fixers['javascript'] = ['prettier']
-let g:ale_linters = {}
-let g:ale_linters['python'] = ['flake8 --max-line-length=80', 'pyls']
-let g:ale_linters['c'] = ['ccls']
-let g:ale_fix_on_save = 1
-let g:ale_javascript_prettier_use_local_config = 1
-
-let g:ycm_global_ycm_extra_conf = "~/.vim/.ycm_extra_conf.py"
-let g:ycm_min_num_of_chars_for_completion = 6
-let g:ycm_enable_diagnostic_signs = 0
-let g:ycm_confirm_extra_conf = 0
-let g:ycm_autoclose_preview_window_after_completion=1
-
-let g:go_fmt_command = "goimports"
-let g:go_highlight_functions = 1
-let g:go_highlight_methods = 1
-let g:go_highlight_structs = 1
-let g:go_highlight_operators = 1
-let g:go_highlight_build_constraints = 1
 
 let c_space_errors = 1
 let python_highlight_space_errors = 1
@@ -206,8 +187,11 @@ nnoremap ,m :make<cr>
 nnoremap <Leader><Leader> :set invpaste paste?<CR>
 nnoremap <Leader>n :set invnumber number?<CR>
 nnoremap ,w :call <SID>WrapToggle()<CR>
-nnoremap ,r :ALEFindReferences<CR>
-nnoremap ,d :ALEGoToDefinition<CR>
+nmap <silent> ,r <Plug>(coc-references)
+nmap <silent> ,d <Plug>(coc-definition)
+nmap <silent> ,D <Plug>(coc-type-definition)
+nmap <silent> ,i <Plug>(coc-implementation)
+nmap <silent> <silent> ,S :<C-u>CocList -I symbols<cr>
 
 function! s:WrapToggle()
     set invwrap wrap?
@@ -340,16 +324,15 @@ filetype plugin on
 filetype indent on
 
 if has("autocmd")
+    autocmd FileType c,cpp set autoindent cindent cinoptions=:0t0j1(0u0w1
     autocmd BufNewFile,BufRead *.txt setlocal filetype=text
     autocmd BufNewFile,BufRead *.md setlocal filetype=markdown
     autocmd FileType gitcommit setlocal spell nocindent
     autocmd FileType c,cpp setlocal path+=/usr/include/**
     autocmd FileType c,cpp setlocal path+=/usr/local/include/**
     autocmd FileType go setlocal noexpandtab
-    autocmd BufWrite c,cpp :Autoformat
     autocmd FileType markdown,text,none setlocal noci nocin noai nosi spell
     autocmd FileType fountain setlocal noci nocin noai nosi
-    autocmd FileType qf setlocal wrap
     autocmd BufNewFile *.{h,hpp} call <SID>InsertGates()
 endif
 

@@ -1,0 +1,43 @@
+{
+    "coc": {
+        "preferences": {
+            "formatOnSaveFiletypes": ["rust", "go", "python"]
+        }
+    },
+    "python": {
+        "linting": {
+            "enabled": true,
+            "flake8Args": "--max-line-length=80",
+            "flake8Enabled": true,
+            "pylintEnabled": false
+        },
+        "formatting": {
+            "enabled": false,
+            "provider": "black",
+            "blackArgs": "--line-length 80"
+        }
+    },
+    "rust.racer_completion": true,
+    "languageserver": {
+        "ccls": {
+            "command": "ccls",
+            "filetypes": ["c", "cpp", "objc", "objcpp"],
+            "rootPatterns": [".ccls", "compile_commands.json", ".vim/", ".git/", ".hg/"],
+            "initializationOptions": {
+                "cache": {
+                    "directory": "/tmp/ccls"
+                }
+            }
+        },
+        "golang": {
+            "command": "gopls",
+            "rootPatterns": ["go.mod", ".vim/", ".git/", ".hg/"],
+            "filetypes": ["go"]
+        },
+        "rust": {
+            "command": "ra_lsp_server",
+            "filetypes": ["rust"],
+            "rootPatterns": ["Cargo.toml"]
+        }
+    }
+}
