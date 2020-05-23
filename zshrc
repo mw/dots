@@ -67,8 +67,7 @@ zstyle ':completion:*:options' auto-description '%d'
 zstyle :compinstall filename "$HOME/.zshrc"
 
 export SHELL=zsh
-export SVN_EDITOR=vim
-export EDITOR=vim
+export EDITOR=nvim
 export DIRSTACKSIZE=8
 export CLICOLOR=1
 export LSCOLORS=dxfxcxdxbxegedabagacad
@@ -141,8 +140,6 @@ promptinit
 PROMPT=' %{$fg[cyan]%}%1/%{$reset_color%}%{$fg_bold[white]%} › %{$reset_color%}'
 RPROMPT='%(?.. %? ↵ )% %{$fg[blue]%} ${vcs_info_msg_0_} %{$reset_color%}'
 
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+eval $(starship init zsh)
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh

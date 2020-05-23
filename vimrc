@@ -79,7 +79,6 @@ set wildignore+=build
 set wildignore+=dist
 set wildignore+=install
 set wildignore+=node_modules
-set wildignore+=.ccls-cache
 set whichwrap=h,l,b,<,>,[,]
 set pastetoggle=<Insert>
 set ignorecase
@@ -135,6 +134,8 @@ let hostfile = $HOME . '/.vim/hosts/' . hostname() . '.vim'
 if filereadable(hostfile)
     exe 'source ' . hostfile
 endif
+
+let g:coc_global_extensions = ['coc-json', 'coc-clangd', 'coc-python', 'coc-rls']
 
 let g:autoformat_autoindent = 0
 let g:autoformat_retab = 0
@@ -223,6 +224,8 @@ let g:fzf_action = {
   \ 'ctrl-x': 'split',
   \ 'ctrl-v': 'vsplit' }
 
+let g:fzf_layout = { 'window': { 'width': 0.9, 'height': 0.6 } }
+
 let $FZF_DEFAULT_OPTS = '--bind ctrl-a:select-all'
 let $FZF_DEFAULT_COMMAND = 'fd --type f --hidden --follow --exclude .git'
 command! -nargs=? -complete=dir Files
@@ -269,7 +272,7 @@ vnoremap <Leader>f "hy:%s/<c-r>=escape("<c-r>h", "\\\/")<cr>//gc<left><left><lef
 vnoremap <Leader>F "hy:%s/<c-r>=escape("<c-r>h", "\\\/")<cr>//gcI<left><left><left><left>
 
 " grep
-nnoremap <Leader>g :Rg <c-r>=expand("<cword>")<cr>
+nnoremap <Leader>g :Rg<cr><c-r>=expand("<cword>")
 vnoremap <Leader>g "hy:Rg <c-r>h<cr>
 nnoremap <silent> ,q :call <SID>WinType("quickfix")<cr>:cw<cr>
 nnoremap ,n :cn<cr>

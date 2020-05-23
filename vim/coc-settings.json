@@ -1,34 +1,30 @@
 {
     "coc": {
         "preferences": {
-            "formatOnSaveFiletypes": ["rust", "go", "python"]
+            "formatOnSaveFiletypes": [
+                "rust",
+                "go",
+                "python",
+                "typescript",
+                "typescript.tsx"
+            ]
         }
     },
     "python": {
         "linting": {
             "enabled": true,
-            "flake8Args": "--max-line-length=80",
+            "flake8Args": ["--max-line-length", "80"],
             "flake8Enabled": true,
             "pylintEnabled": false
         },
         "formatting": {
-            "enabled": false,
+            "enabled": true,
             "provider": "black",
-            "blackArgs": "--line-length 80"
+            "blackArgs": ["--line-length", "80"]
         }
     },
     "rust.racer_completion": true,
     "languageserver": {
-        "ccls": {
-            "command": "ccls",
-            "filetypes": ["c", "cpp", "objc", "objcpp"],
-            "rootPatterns": [".ccls", "compile_commands.json", ".vim/", ".git/", ".hg/"],
-            "initializationOptions": {
-                "cache": {
-                    "directory": "/tmp/ccls"
-                }
-            }
-        },
         "golang": {
             "command": "gopls",
             "rootPatterns": ["go.mod", ".vim/", ".git/", ".hg/"],
@@ -39,5 +35,7 @@
             "filetypes": ["rust"],
             "rootPatterns": ["Cargo.toml"]
         }
-    }
+    },
+    "suggest.autoTrigger": "trigger",
+    "clangd.path": "/home/marc/.config/coc/extensions/coc-clangd-data/install/10.0.0/clangd_10.0.0/bin/clangd"
 }
