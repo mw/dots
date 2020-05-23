@@ -87,6 +87,8 @@ export CXX_INCLUDE_PATH=~/include:$PATH
 export PATH=~/bin:~/.cargo/bin:/usr/local/bin:/usr/local/share/npm/bin:$PATH
 export RUST_SRC_PATH=~/Vendor/rust/src/
 
+fpath=(/usr/local/share/zsh-completions $fpath)
+
 local WORDCHARS=${WORDCHARS//\//}
 
 alias l='ls'
@@ -106,8 +108,8 @@ for file ($zsh_path/*.{z,}sh(N))
     source $file
 
 local hostname=$(hostname)
-if [[ -f "$zsh_path/hosts/$hostname.zsh" ]]; then
-    source "$zsh_path/hosts/$hostname.zsh"
+if [[ -f "$zsh_path/hosts/${hostname}.zsh" ]]; then
+    source "$zsh_path/hosts/${hostname}.zsh"
 fi
 
 if [[ -f .localenv.sh ]]; then

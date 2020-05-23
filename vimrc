@@ -18,9 +18,11 @@ Plug 'ludovicchabant/vim-gutentags'
 Plug 'Chiel92/vim-autoformat'
 Plug 'leafgarland/typescript-vim'
 Plug 'ianks/vim-tsx'
+Plug 'tpope/vim-fugitive'
 Plug 'neoclide/coc.nvim', { 'branch': 'release' }
 Plug 'machakann/vim-sandwich'
 Plug 'triglav/vim-visual-increment'
+Plug 'junegunn/seoul256.vim'
 
 call plug#end()
 
@@ -116,6 +118,18 @@ function! s:check_back_space() abort
   return !col || getline('.')[col - 1]  =~# '\s'
 endfunction
 
+inoremap <silent><expr> <c-space> coc#refresh()
+
+" Use `[g` and `]g` to navigate diagnostics
+nmap <silent> [g <Plug>(coc-diagnostic-prev)
+nmap <silent> ]g <Plug>(coc-diagnostic-next)
+" Remap for do codeAction of current line
+nmap <leader>ac <Plug>(coc-codeaction)
+" Fix autofix problem of current line
+nmap <leader>qf <Plug>(coc-fix-current)
+
+let g:rustfmt_autosave = 1
+
 let g:lightline = {'colorscheme': 'wombat'}
 
 let c_space_errors = 1
@@ -166,6 +180,8 @@ nnoremap ,s :source ~/.vimrc<CR>
 nnoremap ,v :edit ~/.vimrc<CR>
 nnoremap ,T :NERDTreeToggle<CR>
 nnoremap ,U :UndotreeToggle<CR>
+
+nnoremap <silent> <C-L> :redraw<cr>:call popup_clear()<cr>:lclose<cr>
 
 nnoremap <space> zz
 vnoremap <space> zz
@@ -266,6 +282,7 @@ noremap <C-Z> :shell<CR>
 
 " search and replace cword/selection (normal and visual modes)
 nnoremap <Leader>f :%s/\<<c-r>=expand("<cword>")<cr>\>//gc<left><left><left>
+
 " case sensitive
 nnoremap <Leader>F :%s/\<<c-r>=expand("<cword>")<cr>\>//gcI<left><left><left><left>
 vnoremap <Leader>f "hy:%s/<c-r>=escape("<c-r>h", "\\\/")<cr>//gc<left><left><left>
@@ -337,18 +354,7 @@ if has("autocmd")
     autocmd FileType markdown,text,none setlocal noci nocin noai nosi spell
     autocmd FileType fountain setlocal noci nocin noai nosi
     autocmd BufNewFile *.{h,hpp} call <SID>InsertGates()
-endif
-
-" allows gf command to open python modules from import commands
-if has('python')
-python << EOF
-import os
-import sys
-import vim
-for p in sys.path:
-    if os.path.isdir(p):
-        vim.command(r"set path+=%s" % (p.replace(" ", r"\ ")))
-EOF
+	autocmd CursorHold * silent call CocActionAsync('highlight')
 endif
 
 " add include guards for new header files

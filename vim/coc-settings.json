@@ -11,6 +11,7 @@
         }
     },
     "python": {
+        "pythonPath": "/usr/bin/python3",
         "linting": {
             "enabled": true,
             "flake8Args": ["--max-line-length", "80"],
@@ -23,7 +24,6 @@
             "blackArgs": ["--line-length", "80"]
         }
     },
-    "rust.racer_completion": true,
     "languageserver": {
         "golang": {
             "command": "gopls",
