@@ -31,3 +31,5 @@ conflictstyle = diff3
 	enabled = true
 [pull]
 	rebase = preserve
+[http]
+	postBuffer = 157286400

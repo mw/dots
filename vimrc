@@ -23,6 +23,8 @@ Plug 'neoclide/coc.nvim', { 'branch': 'release' }
 Plug 'machakann/vim-sandwich'
 Plug 'triglav/vim-visual-increment'
 Plug 'junegunn/seoul256.vim'
+Plug 'vimwiki/vimwiki'
+Plug 'nathangrigg/vim-beancount'
 
 call plug#end()
 
@@ -105,6 +107,7 @@ set noshowmode
 set directory=$HOME/.vim/swap
 set timeoutlen=1000
 set ttimeoutlen=0
+set nofoldenable
 syntax on
 
 " Use tab for trigger completion with characters ahead and navigate.
@@ -133,6 +136,8 @@ nmap <leader>qf <Plug>(coc-fix-current)
 let g:rustfmt_autosave = 1
 
 let g:lightline = {'colorscheme': 'wombat'}
+
+let g:vimwiki_list = [{'path': '~/Private/wiki'}]
 
 let c_space_errors = 1
 let python_highlight_space_errors = 1
@@ -230,11 +235,11 @@ endfunction
 nnoremap j gj
 nnoremap k gk
 
-function! s:build_quickfix_list(lines)
-  call setqflist(map(copy(a:lines), '{ "filename": v:val }'))
-  copen
-  cc
-endfunction
+ function! s:build_quickfix_list(lines)
+   call setqflist(map(copy(a:lines), '{ "filename": v:val }'))
+   copen
+   cc
+ endfunction
 
 let g:fzf_action = {
   \ 'ctrl-q': function('s:build_quickfix_list'),
@@ -278,9 +283,13 @@ nnoremap <silent> ,b :Buffers<CR>
 nnoremap <silent> ,t :Tags<CR>
 nnoremap <silent> ,f :Files<CR>
 nnoremap <silent> ,g :GFiles<CR>
-nnoremap <silent> ,l :FZFLines<CR>
+"nnoremap <silent> ,l :FZFLines<CR>
 
-noremap <C-Z> :shell<CR>
+if has('nvim')
+    noremap <C-Z> :terminal<CR>i
+else
+    noremap <C-Z> :shell<CR>
+endif
 
 " search and replace cword/selection (normal and visual modes)
 nnoremap <Leader>f :%s/\<<c-r>=expand("<cword>")<cr>\>//gc<left><left><left>
@@ -291,7 +300,7 @@ vnoremap <Leader>f "hy:%s/<c-r>=escape("<c-r>h", "\\\/")<cr>//gc<left><left><lef
 vnoremap <Leader>F "hy:%s/<c-r>=escape("<c-r>h", "\\\/")<cr>//gcI<left><left><left><left>
 
 " grep
-nnoremap <Leader>g :Rg<cr><c-r>=expand("<cword>")
+nnoremap <Leader>g :Rg <c-r>=expand("<cword>")<cr><cr>
 vnoremap <Leader>g "hy:Rg <c-r>h<cr>
 nnoremap <silent> ,q :call <SID>WinType("quickfix")<cr>:cw<cr>
 nnoremap ,n :cn<cr>
@@ -329,7 +338,6 @@ cnoremap Æ <S-Right>
 cnoremap  <c-W>
 inoremap Â <S-Left>
 inoremap Æ <S-Right>
-inoremap  <c-W>
 nnoremap <silent> Q :BD!<cr>
 nnoremap <C-n> :bn<cr>
 nnoremap <C-p> :bp<cr>

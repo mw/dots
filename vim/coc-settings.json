@@ -37,5 +37,6 @@
         }
     },
     "suggest.autoTrigger": "trigger",
-    "clangd.path": "/home/marc/.config/coc/extensions/coc-clangd-data/install/10.0.0/clangd_10.0.0/bin/clangd"
+    "clangd.path": "/home/marc/.config/coc/extensions/coc-clangd-data/install/10.0.0/clangd_10.0.0/bin/clangd",
+    "python.formatting.provider": "black"
 }

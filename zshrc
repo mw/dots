@@ -136,3 +136,4 @@ RPROMPT='%(?.. %? ↵ )% %{$fg[blue]%} ${vcs_info_msg_0_} %{$reset_color%}'
 eval $(starship init zsh)
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+if [ -e /home/marc/.nix-profile/etc/profile.d/nix.sh ]; then . /home/marc/.nix-profile/etc/profile.d/nix.sh; fi # added by Nix installer
