@@ -1,4 +1,3 @@
-alias g='grep -Isi --color'
 alias ls='exa'
 export PATH=$PATH:~/Code/engtools/exreview:~/Code/ehit/packages/ehit-atlas-tools/src/
 export PATH=~/.go/bin:~/.local/bin:/usr/local/go/bin/:$PATH
