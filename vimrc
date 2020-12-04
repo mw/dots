@@ -103,6 +103,8 @@ set statusline+=\ %c,%l/%L\ (%P)
 set spelllang=en_us
 set noshowmode
 set directory=$HOME/.vim/swap
+set timeoutlen=1000
+set ttimeoutlen=0
 syntax on
 
 " Use tab for trigger completion with characters ahead and navigate.

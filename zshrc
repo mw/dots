@@ -116,24 +116,15 @@ if [[ -f .localenv.sh ]]; then
     source .localenv.sh
 fi
 
-function screen_set() {
-    if [[ $TERM == "screen" ]]; then
-        print -nR $'\033k'$1$'\033'\\$'\033]0;'$1$'\a'
-    fi
-}
-
-
 source ~/dots/zsh/z.sh
 
 function preexec() {
     local -a cmd; cmd=(${(z)1})
     tab_name=$cmd[1]:t
-    screen_set $tab_name
     z --add "$(pwd -P)"
 }
 
 function precmd() {
-    screen_set $PWD:t
     vcs_info
 }
 
