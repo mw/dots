@@ -10,6 +10,7 @@ bwcopy() {
     if [[ -z ${BW_SESSION} ]]; then
         export BW_SESSION=$(bw unlock --raw)
     fi
+    export DISPLAY=:0.0
     if hash bw 2>/dev/null; then
         bw get item "$(bw list items | jq '.[] | "\(.name) | username: \(.login.username) | id: \(.id)"' | sed 's/\"//g' | fzf-tmux -q "$query" | awk '{print $(NF)}' | sed 's/\"//g')" | jq -j '.login.password' | xclip
     fi
