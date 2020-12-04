@@ -22,7 +22,8 @@
             "enabled": true,
             "provider": "black",
             "blackArgs": ["--line-length", "80"]
-        }
+        },
+        "jediEnabled": false
     },
     "languageserver": {
         "golang": {

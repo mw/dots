@@ -27,9 +27,13 @@ context = 12
 [merge]
 tool = vimdiff
 conflictstyle = diff3
+
 [rerere]
-	enabled = true
+enabled = true
+
 [pull]
-	rebase = preserve
-[http]
-	postBuffer = 157286400
+rebase = preserve
+postBuffer = 157286400
+
+[alias]
+br = "!git for-each-ref refs/heads --color=always --sort -committerdate --format='%(HEAD)%(color:reset);%(color:yellow)%(refname:short);%(color:green)(%(committerdate:relative))' | column -t -s ';'"

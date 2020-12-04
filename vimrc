@@ -94,6 +94,7 @@ set completeopt=menuone,longest,preview
 set viminfo-=! viminfo+=!
 set sessionoptions=buffers
 set signcolumn=yes
+set conceallevel=0
 set statusline=%f
 set statusline+=\ %h%m%r%w
 set statusline+=\ (%{strlen(&ft)?&ft:'none'}
@@ -156,7 +157,7 @@ if filereadable(hostfile)
     exe 'source ' . hostfile
 endif
 
-let g:coc_global_extensions = ['coc-json', 'coc-clangd', 'coc-python', 'coc-rls']
+let g:coc_global_extensions = ['coc-json', 'coc-clangd', 'coc-python', 'coc-rls', 'coc-go']
 
 let g:autoformat_autoindent = 0
 let g:autoformat_retab = 0
@@ -300,8 +301,8 @@ vnoremap <Leader>f "hy:%s/<c-r>=escape("<c-r>h", "\\\/")<cr>//gc<left><left><lef
 vnoremap <Leader>F "hy:%s/<c-r>=escape("<c-r>h", "\\\/")<cr>//gcI<left><left><left><left>
 
 " grep
-nnoremap <Leader>g :Rg <c-r>=expand("<cword>")<cr><cr>
-vnoremap <Leader>g "hy:Rg <c-r>h<cr>
+nnoremap <Leader>g :Rg <c-r>=expand("<cword>")<cr>
+vnoremap <Leader>g "hy:Rg <c-r>h
 nnoremap <silent> ,q :call <SID>WinType("quickfix")<cr>:cw<cr>
 nnoremap ,n :cn<cr>
 nnoremap ,p :cp<cr>
@@ -365,6 +366,7 @@ if has("autocmd")
     autocmd FileType fountain setlocal noci nocin noai nosi
     autocmd BufNewFile *.{h,hpp} call <SID>InsertGates()
 	autocmd CursorHold * silent call CocActionAsync('highlight')
+    autocmd BufWritePre *.go :call CocAction('runCommand', 'editor.action.organizeImport')
 endif
 
 " add include guards for new header files

@@ -1,4 +1,4 @@
-let g:formatdef_custom_ex='"/home/marc/Code/depot/build/tools/format_code.sh -f ".bufname("%")'
+let g:formatdef_custom_ex='"/home/marc/Code/sensor/build/tools/format_code.sh -f ".bufname("%")'
 let g:formatters_c=['custom_ex']
 let g:formatters_cpp=['custom_ex']
 let g:formatters_yacc=['custom_ex']

@@ -130,9 +130,6 @@ function precmd() {
 
 promptinit
 
-PROMPT=' %{$fg[cyan]%}%1/%{$reset_color%}%{$fg_bold[white]%} › %{$reset_color%}'
-RPROMPT='%(?.. %? ↵ )% %{$fg[blue]%} ${vcs_info_msg_0_} %{$reset_color%}'
-
 eval $(starship init zsh)
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
