@@ -132,5 +132,8 @@ promptinit
 
 eval $(starship init zsh)
 
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 if [ -e /home/marc/.nix-profile/etc/profile.d/nix.sh ]; then . /home/marc/.nix-profile/etc/profile.d/nix.sh; fi # added by Nix installer
