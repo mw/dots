@@ -2,14 +2,10 @@
 
 FILES="
 config/alacritty
+config/nvim
 gitconfig
 gitignore
-screenrc
 tmux.conf
-vim
-vimrc
-Xdefaults
-xsession
 zsh
 zshrc
 "

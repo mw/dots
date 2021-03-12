@@ -22,7 +22,7 @@ ignorecase = false
 pager = less -x4
 
 [diff]
-context = 12
+context = 8
 
 [merge]
 tool = vimdiff
