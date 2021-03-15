@@ -5,6 +5,7 @@ local packer = require('packer')
 
 function lspconfig()
     local cfg = require('lspconfig')
+    local completion = require('completion')
     local servers = {
         "pyright",
         "rust_analyzer",
@@ -19,7 +20,6 @@ function lspconfig()
         local function map(...)
             vim.api.nvim_buf_set_keymap(bufnr, ...)
         end
-        opt('omnifunc', 'v:lua.vim.lsp.omnifunc')
         -- Mappings.
         local opts = {noremap=true, silent=true}
         map('n', ',d', '<cmd>lua vim.lsp.buf.definition()<CR>', opts)
@@ -38,6 +38,7 @@ function lspconfig()
                 autocmd BufWritePost * lua vim.lsp.buf.formatting()<cr>
             ]])
         end
+        completion.on_attach(client, bufnr)
     end
     for _, lsp in ipairs(servers) do
         cfg[lsp].setup({on_attach = on_attach})
@@ -72,11 +73,48 @@ function M.init()
             'nvim-telescope/telescope.nvim',
             requires = {{'nvim-lua/popup.nvim'}, {'nvim-lua/plenary.nvim'}},
             config = function()
+                local telescope = require('telescope')
+                local actions = require('telescope.actions')
                 local util = require('util')
+                telescope.setup({
+                    defaults = {
+                        mappings = {
+                            i = {
+                                ["<tab>"] = function(bufnr)
+                                    actions.toggle_selection(bufnr)
+                                    actions.move_selection_next(bufnr)
+                                end,
+                                ["<s-tab>"] = function(bufnr)
+                                    actions.move_selection_previous(bufnr)
+                                    actions.toggle_selection(bufnr)
+                                end,
+                                ["<c-q>"] = function(bufnr)
+                                    actions.smart_send_to_qflist(bufnr)
+                                    vim.cmd("copen")
+                                end
+                            },
+                            n = {
+                                ["<tab>"] = function(bufnr)
+                                    actions.toggle_selection(bufnr)
+                                    actions.move_selection_next(bufnr)
+                                end,
+                                ["<s-tab>"] = function(bufnr)
+                                    actions.move_selection_previous(bufnr)
+                                    actions.toggle_selection(bufnr)
+                                end,
+                                ["<c-q>"] = function(bufnr)
+                                    actions.smart_send_to_qflist(bufnr)
+                                    vim.cmd("copen")
+                                end
+                            },
+                        }
+                    }
+                })
                 local mappings = {
                     {',f', 'find_files'},
                     {',b', 'buffers'},
                     {',g', 'live_grep'},
+                    {'<leader>g', 'grep_string'},
                     {',t', 'tags'}
                 }
                 local opts = {
@@ -104,7 +142,15 @@ function M.init()
                 vim.cmd('colorscheme seoul256')
             end
         }
-        use {'nvim-lua/completion-nvim'}
+        use {
+            'nvim-lua/completion-nvim',
+            config = function()
+                vim.cmd([[
+                    imap <tab> <Plug>(completion_smart_tab)
+                    imap <s-tab> <Plug>(completion_smart_s_tab)
+                ]])
+            end
+        }
         use {
             'kyazdani42/nvim-tree.lua',
             requires = {'kyazdani42/nvim-web-devicons', opt = true},

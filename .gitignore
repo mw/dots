@@ -1,4 +1,3 @@
 .tags
-vim/pack/minpac/start/
-vim/undo
+config/nvim/plugin/packer_compiled.vim
 zsh/cache
