@@ -15,7 +15,6 @@ util.opt('o', 'hlsearch', false)
 util.opt('o', 'ignorecase', true)
 util.opt('o', 'joinspaces', false)
 util.opt('o', 'laststatus', 2)
-util.opt('o', 'listchars', 'tab:  ,nbsp:·,trail:■')
 util.opt('o', 'mouse', 'a')
 util.opt('o', 'report', 0)
 util.opt('o', 'sessionoptions', 'buffers')
@@ -46,9 +45,8 @@ util.opt('b', 'undofile', true)
 
 -- window options
 util.opt('w', 'linebreak', true)
-util.opt('w', 'list', true)
 util.opt('w', 'number', true)
-util.opt('w', 'signcolumn', 'auto:3')
+util.opt('w', 'signcolumn', 'auto:1')
 util.opt('w', 'wrap', false)
 
 -- key mappings
@@ -75,3 +73,7 @@ util.map('n', ',p', ':cprev<cr>')
 
 -- autocommands
 vim.cmd('autocmd TermEnter * setlocal nonumber')
+
+-- trailing spaces
+vim.cmd('highlight ExtraWhitespace guifg=#ff0000 guibg=#555555')
+vim.cmd('match ExtraWhitespace /\\s\\+$/')
