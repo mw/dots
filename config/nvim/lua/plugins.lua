@@ -111,6 +111,12 @@ function M.init()
         use {'mhinz/vim-signify'}
         use {'kshenoy/vim-signature'}
         use {
+            'onsails/lspkind-nvim',
+            config = function()
+                require('lspkind').init({})
+            end
+        }
+        use {
             'tpope/vim-fugitive',
             config = function()
                 local util = require('util')
@@ -214,7 +220,17 @@ function M.init()
                 end
             end
         }
-        use {'nvim-treesitter/nvim-treesitter', run = 'TSUpdate'}
+        use {
+            'nvim-treesitter/nvim-treesitter',
+            run = 'TSUpdate',
+            config = function()
+                require('nvim-treesitter.configs').setup({
+                    highlight = {
+                        enable = true
+                    }
+                })
+            end
+        }
         use {
             'nvim-lua/completion-nvim',
             config = function()
