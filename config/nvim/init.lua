@@ -1,75 +1,423 @@
--- plugins
-local util = require('util')
-local plugins = require('plugins')
+local scopes = {o = vim.o, b = vim.bo, w = vim.wo}
 
-plugins.init()
+function opt(scope, key, value)
+    scopes[scope][key] = value
+    if scope ~= 'o' then scopes['o'][key] = value end
+end
+
+function map(mode, lhs, rhs, opts)
+    local options = {noremap = true, silent = true}
+    if opts then options = vim.tbl_extend('force', options, opts) end
+    vim.api.nvim_set_keymap(mode, lhs, rhs, options)
+end
+
+function update(dst, src)
+    local out = {}
+    for k, v in pairs(dst) do
+        out[k] = v
+    end
+    for k, v in pairs(src) do
+        out[k] = v
+    end
+    return out
+end
+
+-- plugin configuration
+
+local install_path = vim.fn.stdpath('data') ..
+    '/site/pack/packer/start/packer.nvim'
+if vim.fn.empty(vim.fn.glob(install_path)) > 0 then
+    packer_bootstrap = vim.fn.system({
+        'git', 'clone', '--depth', '1',
+        'https://github.com/wbthomason/packer.nvim',
+        install_path
+    })
+end
+
+require('packer').startup(function(use)
+    use {
+        'wbthomason/packer.nvim',
+        config = function()
+            map('n', '<leader>pc', ':PackerCompile<cr>')
+            map('n', '<leader>ps', ':PackerSync<cr>')
+        end
+    }
+    use {
+        'junegunn/seoul256.vim',
+        config = function()
+            vim.g.seoul256_background = 236
+            vim.cmd('colorscheme seoul256')
+        end
+    }
+    use {
+        'neovim/nvim-lspconfig',
+        after = {'nvim-cmp', 'seoul256.vim'},
+        config = function()
+            local cfg = require('lspconfig')
+            local servers = {
+                {
+                    'clangd', {
+                        cmd = {"clangd", "--background-index", "--log=verbose"}
+                    }
+                },
+                {'cssls', {}},
+                {'html', {}},
+                {'jsonls', {}},
+                {
+                    'gopls', {
+                        root_dir = cfg.util.root_pattern('Gopkg.toml', 'go.mod', '.git')
+                    }
+                },
+                {'pylsp', {}},
+                {'svelte', {}},
+                {'rust_analyzer', {}},
+                {'tailwindcss', {}},
+                {'tsserver', {}}
+            }
+
+            local function on_attach(client, bufnr)
+                local function map(...)
+                    vim.api.nvim_buf_set_keymap(bufnr, ...)
+                end
+                local opts = {noremap=true, silent=true}
+                map('n', ',d', '<cmd>lua vim.lsp.buf.definition()<CR>', opts)
+                map('n', ',D', '<cmd>lua vim.lsp.buf.type_definition()<CR>', opts)
+                map('n', 'K', '<cmd>lua vim.lsp.buf.hover()<CR>', opts)
+                map('n', '<c-k>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
+                map('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<CR>', opts)
+                map('n', '<leader>e', '<cmd>lua vim.diagnostic.open_float()<CR>', opts)
+                map('n', '<leader>f', '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
+                map('n', ',r', '<cmd>lua vim.lsp.buf.references()<CR>', opts)
+                map('n', ',N', '<cmd>lua vim.diagnostic.goto_next()<CR>', opts)
+                map('n', ',P', '<cmd>lua vim.diagnostic.goto_prev()<CR>', opts)
+                map('n', ',q', '<cmd>lua vim.diagnostic.setloclist()<CR>', opts)
+
+                if client.resolved_capabilities.document_formatting then
+                    vim.cmd([[
+                        augroup formatting
+                        au!
+                        autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting()
+                        augroup END
+                    ]])
+                end
+
+                -- Tone down diagnostics
+                for _, hl in ipairs({
+                    'DiagnosticVirtualTextHint',
+                    'DiagnosticVirtualTextInfo',
+                    'DiagnosticVirtualTextWarn',
+                    'DiagnosticVirtualTextError'
+                }) do
+                    vim.cmd('highlight ' .. hl .. ' guifg=#606060')
+                end
+                for _, hl in ipairs({
+                    'DiagnosticLineNrHint',
+                    'DiagnosticLineNrInfo',
+                    'DiagnosticLineNrWarn',
+                    'DiagnosticLineNrError'
+                }) do
+                    vim.cmd('highlight ' .. hl .. ' guibg=#4B4B4B ' ..
+                        ' guifg=#FFA500 gui=bold')
+                end
+                for _, sign in ipairs({
+                    'DiagnosticSignHint',
+                    'DiagnosticSignInfo',
+                    'DiagnosticSignWarn',
+                    'DiagnosticSignError'
+                }) do
+                    vim.cmd('sign define ' .. sign ..
+                        ' text= texthl=DiagnosticSignWarn linehl= ' ..
+                        'numhl=DiagnosticLineNrWarn')
+                end
+                vim.diagnostic.config({underline = false})
+            end
+
+            local capabilities = require('cmp_nvim_lsp').update_capabilities(
+                vim.lsp.protocol.make_client_capabilities())
+            local defaults = {
+                on_attach = on_attach,
+                capabilities = capabilities
+            }
+            for _, val in ipairs(servers) do
+                local lsp, opts = val[1], update(defaults, val[2])
+                cfg[lsp].setup(opts)
+            end
+        end
+    }
+    use {'machakann/vim-sandwich'}
+    use {'mhinz/vim-signify'}
+    use {'kshenoy/vim-signature'}
+    use {
+        'onsails/lspkind-nvim',
+        config = function()
+            require('lspkind').init({})
+        end
+    }
+    use {
+        'tpope/vim-fugitive',
+        config = function()
+            map('n', '<leader>B', ':Git blame<cr>')
+        end
+    }
+    use {
+        'ludovicchabant/vim-gutentags',
+        config = function()
+            local cmd = 'git ls-files -co '
+            local exts = {
+                'c', 'h', 'cc', 'go', 'py', 'rs', 'ts', 'tsx'
+            }
+            for _, ext in pairs(exts) do
+                cmd = cmd .. string.format('\'*.%s\' ', ext)
+            end
+            vim.g.gutentags_define_advanced_commands = 1
+            vim.g.gutentags_ctags_exclude = {'vendor/*', 'linux/*'}
+            vim.g.gutentags_project_root = {'.git'}
+            vim.g.gutentags_file_list_command = {
+                markers = {
+                    ['.git'] = cmd,
+                }
+            }
+        end
+    }
+    use {
+        'vimwiki/vimwiki',
+        config = function()
+            local util = require('util')
+            map('n', '<leader>ww', ':VimwikiIndex<cr>')
+            vim.g.vimwiki_list = {{path = '~/Private/wiki'}}
+        end
+    }
+    use {
+        'nvim-telescope/telescope.nvim',
+        requires = {{'nvim-lua/popup.nvim'}, {'nvim-lua/plenary.nvim'}},
+        config = function()
+            local telescope = require('telescope')
+            local actions = require('telescope.actions')
+            telescope.setup({
+                defaults = {
+                    mappings = {
+                        i = {
+                            ['<tab>'] = function(bufnr)
+                                actions.toggle_selection(bufnr)
+                                actions.move_selection_next(bufnr)
+                            end,
+                            ['<s-tab>'] = function(bufnr)
+                                actions.move_selection_previous(bufnr)
+                                actions.toggle_selection(bufnr)
+                            end,
+                            ['<c-q>'] = function(bufnr)
+                                actions.smart_send_to_qflist(bufnr)
+                                vim.cmd('copen')
+                            end
+                        },
+                        n = {
+                            ['<tab>'] = function(bufnr)
+                                actions.toggle_selection(bufnr)
+                                actions.move_selection_next(bufnr)
+                            end,
+                            ['<s-tab>'] = function(bufnr)
+                                actions.move_selection_previous(bufnr)
+                                actions.toggle_selection(bufnr)
+                            end,
+                            ['<c-q>'] = function(bufnr)
+                                actions.smart_send_to_qflist(bufnr)
+                                vim.cmd('copen')
+                            end
+                        },
+                    }
+                }
+            })
+            local opts = {
+                theme = 'get_dropdown',
+                prompt_prefix = '🔍\\ \\ ',
+            }
+            local buf_opts = update(opts, {
+                show_all_buffers = 'true',
+                sort_lastused = 'true',
+                default_selection_index = '1',
+            })
+            local mappings = {
+                {',f', 'find_files', opts},
+                {',b', 'buffers', buf_opts},
+                {',g', 'live_grep', opts},
+                {'<leader>g', 'grep_string', opts},
+                {',t', 'tags', opts}
+            }
+            for _, v in ipairs(mappings) do
+                local seq, cmd, opts = v[1], v[2], v[3]
+                local out = ''
+                for k, v in pairs(opts) do
+                    out = string.format('%s%s=%s ', out, k, v)
+                end
+                map('n', seq, string.format(
+                    ':Telescope %s %s<cr>', cmd, out)
+                )
+            end
+        end
+    }
+    use {
+        'nvim-treesitter/nvim-treesitter',
+        run = 'TSUpdate',
+        config = function()
+            require('nvim-treesitter.configs').setup({
+                highlight = {
+                    enable = true
+                }
+            })
+        end
+    }
+    use {'hrsh7th/vim-vsnip'}
+    use {'hrsh7th/cmp-nvim-lsp'}
+    use {
+        'hrsh7th/nvim-cmp',
+        config = function()
+            local cmp = require('cmp')
+            cmp.setup({
+                completion = {
+                    autocomplete = false
+                },
+                mapping = {
+                    ['<C-b>'] = cmp.mapping(cmp.mapping.scroll_docs(-4)),
+                    ['<C-f>'] = cmp.mapping(cmp.mapping.scroll_docs(4)),
+                    ['<Tab>'] = function(fallback)
+						local line, col = unpack(vim.api.nvim_win_get_cursor(0))
+						local txt = vim.api.nvim_buf_get_lines(0, line - 1,
+                            line, true)[1]
+						local before = txt:sub(col, col)
+                        if cmp.visible() then
+                            cmp.select_next_item()
+                        elseif before ~= '' and before:match('%s') == nil then
+                            cmp.complete()
+                        else
+                            fallback()
+                        end
+                    end,
+                    ['<S-Tab>'] = function(fallback)
+                        if cmp.visible() then
+                            cmp.select_prev_item()
+                        else
+                            fallback()
+                        end
+                    end,
+                    ['<CR>'] = cmp.mapping.confirm({ select = true })
+                },
+                snippet = {
+                    expand = function(args)
+                         vim.fn["vsnip#anonymous"](args.body)
+                    end,
+                },
+                sources = cmp.config.sources({
+                    { name = 'nvim_lsp' },
+                    { name = 'vsnip' }
+                }),
+                formatting = {
+                    fields = { "kind", "abbr" },
+                    format = require('lspkind').cmp_format()
+                },
+            })
+          end
+    }
+    use {
+        'kyazdani42/nvim-tree.lua',
+        requires = {'kyazdani42/nvim-web-devicons', opt = true},
+        config = function()
+            map('n', '<leader>t', ':NvimTreeToggle<cr>')
+        end
+    }
+    use {
+        'hoob3rt/lualine.nvim',
+        requires = {'kyazdani42/nvim-web-devicons', opt = true},
+        config = function()
+            require('lualine').setup({
+                options = {
+                    theme = 'seoul256',
+                    section_separators = {'', ''},
+                    component_separators = {'', ''},
+                    icons_enabled = true,
+                },
+                sections = {
+                    lualine_a = {{'mode', upper = true}},
+                    lualine_b = {{'branch', icon = ''}},
+                    lualine_c = {{'filename', file_status = true}},
+                    lualine_x = {},
+                    lualine_y = {'filetype'},
+                    lualine_z = {'location'},
+                },
+                inactive_sections = {}
+            })
+        end
+    }
+    if packer_bootstrap then
+        require('packer').sync()
+    end
+end)
 
 -- global options
-util.opt('o', 'backspace', 'indent,eol,nostop')
-util.opt('o', 'backup', true)
-util.opt('o', 'backupdir', '/tmp,.')
-util.opt('o', 'completeopt', 'menuone,noinsert,noselect')
-util.opt('o', 'foldenable', false)
-util.opt('o', 'hidden', true)
-util.opt('o', 'hlsearch', false)
-util.opt('o', 'ignorecase', true)
-util.opt('o', 'joinspaces', false)
-util.opt('o', 'laststatus', 2)
-util.opt('o', 'mouse', 'a')
-util.opt('o', 'report', 0)
-util.opt('o', 'sessionoptions', 'buffers')
-util.opt('o', 'shortmess', 'filnxtToOFc')
-util.opt('o', 'showbreak', '→')
-util.opt('o', 'showcmd', false)
-util.opt('o', 'showmatch', true)
-util.opt('o', 'showmode', false)
-util.opt('o', 'smartcase', true)
-util.opt('o', 'smarttab', true)
-util.opt('o', 'termguicolors', true)
-util.opt('o', 'undolevels', 8000)
-util.opt('o', 'undoreload', 30000)
-util.opt('o', 'whichwrap', 'h,l,<,>,[,]')
-util.opt('o', 'wildignore', '*.o,*.bak,*.pyc,*.swp,.git,node_modules')
-util.opt('o', 'wildmode', 'list:longest')
-util.opt('o', 'writebackup', true)
+opt('o', 'backspace', 'indent,eol,nostop')
+opt('o', 'backup', true)
+opt('o', 'backupdir', '/tmp,.')
+opt('o', 'completeopt', 'menuone,noinsert,noselect')
+opt('o', 'foldenable', false)
+opt('o', 'hidden', true)
+opt('o', 'hlsearch', false)
+opt('o', 'ignorecase', true)
+opt('o', 'joinspaces', false)
+opt('o', 'laststatus', 2)
+opt('o', 'mouse', 'a')
+opt('o', 'report', 0)
+opt('o', 'sessionoptions', 'buffers')
+opt('o', 'shortmess', 'filnxtToOFc')
+opt('o', 'showbreak', '→')
+opt('o', 'showcmd', false)
+opt('o', 'showmatch', true)
+opt('o', 'showmode', false)
+opt('o', 'smartcase', true)
+opt('o', 'smarttab', true)
+opt('o', 'termguicolors', true)
+opt('o', 'undolevels', 8000)
+opt('o', 'undoreload', 30000)
+opt('o', 'whichwrap', 'h,l,<,>,[,]')
+opt('o', 'wildignore', '*.o,*.bak,*.pyc,*.swp,.git,node_modules')
+opt('o', 'wildmode', 'list:longest')
+opt('o', 'writebackup', true)
 
 -- buffer options
-util.opt('b', 'expandtab', true)
-util.opt('b', 'formatoptions', 'tcroqnj')
-util.opt('b', 'shiftwidth', 4)
-util.opt('b', 'spelllang', 'en_us')
-util.opt('b', 'syntax', 'on')
-util.opt('b', 'tabstop', 4)
-util.opt('b', 'textwidth', 80)
-util.opt('b', 'undofile', true)
+opt('b', 'expandtab', true)
+opt('b', 'formatoptions', 'tcroqnj')
+opt('b', 'shiftwidth', 4)
+opt('b', 'spelllang', 'en_us')
+opt('b', 'syntax', 'on')
+opt('b', 'tabstop', 4)
+opt('b', 'textwidth', 80)
+opt('b', 'undofile', true)
 
 -- window options
-util.opt('w', 'linebreak', true)
-util.opt('w', 'number', true)
-util.opt('w', 'signcolumn', 'auto:1')
-util.opt('w', 'wrap', false)
+opt('w', 'linebreak', true)
+opt('w', 'number', true)
+opt('w', 'signcolumn', 'yes:1')
+opt('w', 'wrap', false)
 
 -- key mappings
-util.map('v', '<space>', 'zz')
-util.map('n', '<space>', 'zz')
+map('v', '<space>', 'zz')
+map('n', '<space>', 'zz')
 
-util.map('i', '<s-tab>', 'pumvisible() ? "\\<C-p>" : "\\<tab>"', {expr = true})
-util.map('i', '<tab>', 'pumvisible() ? "\\<C-n>" : "\\<tab>"', {expr = true})
+map('i', '<s-tab>', 'pumvisible() ? "\\<C-p>" : "\\<tab>"', {expr = true})
+map('i', '<tab>', 'pumvisible() ? "\\<C-n>" : "\\<tab>"', {expr = true})
 
-util.map('n', '<leader><leader>', ':set invpaste paste?<cr>')
-util.map('n', '<leader>n', ':set invnumber number?<cr>')
-util.map('n', ',w', ':set invwrap wrap?<cr>')
+map('n', '<leader><leader>', ':set invpaste paste?<cr>')
+map('n', '<leader>n', ':set invnumber number?<cr>')
+map('n', ',w', ':set invwrap wrap?<cr>')
 
-util.map('n', '<c-z>', ':terminal<cr>i')
-util.map('n', '<c-n>', ':bn<cr>')
-util.map('n', '<c-p>', ':bp<cr>')
-util.map('n', 'Q', ':bd!<cr>')
-util.map('n', ',v', ':e ~/.config/nvim/init.lua<cr>')
-util.map('n', ',s', ':luafile ~/.config/nvim/init.lua<cr>')
+map('n', '<c-z>', ':terminal<cr>i')
+map('n', '<c-n>', ':bn<cr>')
+map('n', '<c-p>', ':bp<cr>')
+map('n', 'Q', ':bd!<cr>')
+map('n', ',v', ':e ~/.config/nvim/init.lua<cr>')
+map('n', ',s', ':luafile ~/.config/nvim/init.lua<cr>')
 
-util.map('n', ',q', ':cwindow<cr>')
-util.map('n', ',n', ':cnext<cr>')
-util.map('n', ',p', ':cprev<cr>')
+map('n', ',q', ':cwindow<cr>')
+map('n', ',n', ':cnext<cr>')
+map('n', ',p', ':cprev<cr>')
 
 -- autocommands
 vim.cmd('autocmd TermEnter * setlocal nonumber')

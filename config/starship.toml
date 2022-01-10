@@ -1,0 +1,21 @@
+format = """
+$username\
+$hostname\
+$shlvl\
+$directory\
+$git_branch\
+$git_commit\
+$git_state\
+$git_metrics\
+$git_status\
+$hg_branch\
+$cmake\
+$memory_usage\
+$env_var\
+$cmd_duration\
+$line_break\
+$jobs\
+$time\
+$status\
+$shell\
+$character"""
