@@ -2,12 +2,13 @@
 
 FILES="
 config/alacritty
+config/nix
 config/nvim
 config/starship.toml
 gitconfig
 gitignore
 tmux.conf
-zsh
+zprofile
 zshrc
 "
 

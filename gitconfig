@@ -1,6 +1,6 @@
 [user]
 name = Marc Winners
-email = marc@extrahop.com
+email = git@mw.mozmail.com
 
 [alias]
 b = branch
@@ -32,7 +32,7 @@ conflictstyle = diff3
 enabled = true
 
 [pull]
-rebase = preserve
+rebase = merges
 postBuffer = 157286400
 
 [alias]

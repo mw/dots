@@ -63,6 +63,7 @@ require('packer').startup(function(use)
                 {'cssls', {}},
                 {'html', {}},
                 {'jsonls', {}},
+                {'rnix', {}},
                 {
                     'gopls', {
                         root_dir = cfg.util.root_pattern('Gopkg.toml', 'go.mod', '.git')
@@ -188,70 +189,17 @@ require('packer').startup(function(use)
         end
     }
     use {
-        'nvim-telescope/telescope.nvim',
-        requires = {{'nvim-lua/popup.nvim'}, {'nvim-lua/plenary.nvim'}},
+        'junegunn/fzf.vim',
         config = function()
-            local telescope = require('telescope')
-            local actions = require('telescope.actions')
-            telescope.setup({
-                defaults = {
-                    mappings = {
-                        i = {
-                            ['<tab>'] = function(bufnr)
-                                actions.toggle_selection(bufnr)
-                                actions.move_selection_next(bufnr)
-                            end,
-                            ['<s-tab>'] = function(bufnr)
-                                actions.move_selection_previous(bufnr)
-                                actions.toggle_selection(bufnr)
-                            end,
-                            ['<c-q>'] = function(bufnr)
-                                actions.smart_send_to_qflist(bufnr)
-                                vim.cmd('copen')
-                            end
-                        },
-                        n = {
-                            ['<tab>'] = function(bufnr)
-                                actions.toggle_selection(bufnr)
-                                actions.move_selection_next(bufnr)
-                            end,
-                            ['<s-tab>'] = function(bufnr)
-                                actions.move_selection_previous(bufnr)
-                                actions.toggle_selection(bufnr)
-                            end,
-                            ['<c-q>'] = function(bufnr)
-                                actions.smart_send_to_qflist(bufnr)
-                                vim.cmd('copen')
-                            end
-                        },
-                    }
-                }
-            })
-            local opts = {
-                theme = 'get_dropdown',
-                prompt_prefix = '🔍\\ \\ ',
-            }
-            local buf_opts = update(opts, {
-                show_all_buffers = 'true',
-                sort_lastused = 'true',
-                default_selection_index = '1',
-            })
             local mappings = {
-                {',f', 'find_files', opts},
-                {',b', 'buffers', buf_opts},
-                {',g', 'live_grep', opts},
-                {'<leader>g', 'grep_string', opts},
-                {',t', 'tags', opts}
+                {',f', ':Files'},
+                {',b', ':Buffers'},
+                {',g', ':Rg'},
+                {',t', ':Tags'}
             }
             for _, v in ipairs(mappings) do
-                local seq, cmd, opts = v[1], v[2], v[3]
-                local out = ''
-                for k, v in pairs(opts) do
-                    out = string.format('%s%s=%s ', out, k, v)
-                end
-                map('n', seq, string.format(
-                    ':Telescope %s %s<cr>', cmd, out)
-                )
+                local seq, cmd = v[1], v[2]
+                map('n', seq, string.format('%s<cr>', cmd))
             end
         end
     }
