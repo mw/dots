@@ -43,26 +43,6 @@ require('packer').startup(function(use)
         end
     }
     use {
-        'Chiel92/vim-autoformat',
-        config = function()
-            local host = require('util').host
-            vim.g.autoformat_autoindent = 0
-            vim.g.autoformat_retab = 0
-            vim.g.autoformat_remove_trailing_spaces = 0
-            vim.g.formatdef_custom_ex = '"/home/marc/Code/sensor/build/tools/format_code.sh -f ".bufname("%")'
-            vim.g.formatters_c = {'custom_ex'}
-            vim.g.formatters_cpp = {'custom_ex'}
-            vim.g.formatters_yacc = {'custom_ex'}
-            vim.g.formatters_python = {'black'}
-            vim.cmd([[
-                autocmd BufWritePre *.c,*.cc,*.h,*.y Autoformat
-            ]])
-            vim.cmd([[
-                autocmd FileType python autocmd BufWritePre <buffer> Autoformat
-            ]])
-        end
-    }
-    use {
         'junegunn/seoul256.vim',
         config = function()
             vim.g.seoul256_background = 236
@@ -113,8 +93,7 @@ require('packer').startup(function(use)
                 map('n', ',P', '<cmd>lua vim.diagnostic.goto_prev()<CR>', opts)
                 map('n', ',q', '<cmd>lua vim.diagnostic.setloclist()<CR>', opts)
 
-                if client.name ~= "clangd" and client.name ~= "pylsp" and
-                    client.resolved_capabilities.document_formatting then
+                if client.resolved_capabilities.document_formatting then
                     vim.cmd([[
                         augroup formatting
                         au!
