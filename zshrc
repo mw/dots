@@ -70,6 +70,9 @@ function preexec() {
     tab_name=$cmd[1]:t
 }
 
+if [ -e ${HOME}/.nix-profile/etc/profile.d/nix.sh ]; then
+    source ${HOME}/.nix-profile/etc/profile.d/nix.sh;
+fi
 if command -v nix &> /dev/null; then
     nix profile list | grep 'basepkgs' >/dev/null 2>&1
     if [[ $? -ne 0 ]]; then
