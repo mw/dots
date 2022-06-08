@@ -1,6 +1,6 @@
 window:
   dimensions:
-    columns: 136
+    columns: 155
     lines: 81
 
   opacity: 1
@@ -23,7 +23,7 @@ font:
     family: Inconsolata Nerd Font Mono
     style: Regular
 
-  size: 22.0
+  size: 18.0
 
   offset:
     x: 0
