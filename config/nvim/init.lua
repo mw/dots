@@ -211,6 +211,7 @@ require('packer').startup(function(use)
     }
     use {
         'junegunn/fzf.vim',
+        requires = {'junegunn/fzf'},
         config = function()
             local mappings = {
                 {',f', ':Files'},
