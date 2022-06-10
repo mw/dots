@@ -1,4 +1,4 @@
-local scopes = {o = vim.o, b = vim.bo, w = vim.wo}
+local scopes = { o = vim.o, b = vim.bo, w = vim.wo }
 
 function opt(scope, key, value)
     scopes[scope][key] = value
@@ -6,7 +6,7 @@ function opt(scope, key, value)
 end
 
 function map(mode, lhs, rhs, opts)
-    local options = {noremap = true, silent = true}
+    local options = { noremap = true, silent = true }
     if opts then options = vim.tbl_extend('force', options, opts) end
     vim.api.nvim_set_keymap(mode, lhs, rhs, options)
 end
@@ -51,47 +51,77 @@ require('packer').startup(function(use)
     }
     use {
         'neovim/nvim-lspconfig',
-        after = {'nvim-cmp', 'seoul256.vim'},
+        after = { 'nvim-cmp', 'seoul256.vim' },
         config = function()
             local cfg = require('lspconfig')
             local servers = {
                 {
                     'clangd', {
-                        cmd = {"clangd", "--background-index", "--log=verbose"}
+                        cmd = {
+                            "clangd",
+                            "--background-index",
+                            "--log=verbose"
+                        }
                     }
                 },
-                {'cssls', {}},
-                {'html', {}},
-                {'jsonls', {}},
-                {'rnix', {}},
+                { 'cssls', {} },
+                { 'html', {} },
+                { 'jsonls', {} },
+                { 'rnix', {} },
                 {
                     'gopls', {
-                        root_dir = cfg.util.root_pattern('Gopkg.toml', 'go.mod', '.git')
+                        root_dir = cfg.util.root_pattern('Gopkg.toml',
+                            'go.mod', '.git')
                     }
                 },
-                {'pylsp', {}},
-                {'svelte', {}},
-                {'rust_analyzer', {}},
-                {'tailwindcss', {}},
-                {'tsserver', {}}
+                { 'pylsp', {} },
+                { 'sumneko_lua', {
+                    settings = {
+                        Lua = {
+                            runtime = {
+                                version = 'LuaJIT',
+                            },
+                            diagnostics = {
+                                globals = { 'vim' },
+                            },
+                            workspace = {
+                                library = vim.api.nvim_get_runtime_file("", true),
+                            },
+                            telemetry = {
+                                enable = false,
+                            },
+                        }
+                    }
+
+                } },
+                { 'svelte', {} },
+                { 'rust_analyzer', {} },
+                { 'tailwindcss', {} },
+                { 'tsserver', {} }
             }
 
             local function on_attach(client, bufnr)
-                local function map(...)
-                    vim.api.nvim_buf_set_keymap(bufnr, ...)
+                local mappings = {
+                    { ',d', vim.lsp.buf.definition },
+                    { ',D', vim.lsp.buf.type_definition },
+                    { 'K', vim.lsp.buf.hover },
+                    { '<c-k>', vim.lsp.buf.signature_help },
+                    { 'gi', vim.lsp.buf.implementation },
+                    { '<leader>e', vim.diagnostic.open_float },
+                    { '<leader>f', vim.lsp.buf.rename },
+                    { ',r', vim.lsp.buf.references },
+                    { ',N', vim.diagnostic.goto_next },
+                    { ',P', vim.diagnostic.goto_prev },
+                    { ',q', vim.diagnostic.setloclist },
+                }
+                for _, v in ipairs(mappings) do
+                    local seq, cmd = v[1], v[2]
+                    vim.keymap.set('n', seq, cmd, {
+                        noremap = true,
+                        silent = true,
+                        buffer = bufnr
+                    })
                 end
-                local opts = {noremap=true, silent=true}
-                map('n', ',d', '<cmd>lua vim.lsp.buf.definition()<CR>', opts)
-                map('n', ',D', '<cmd>lua vim.lsp.buf.type_definition()<CR>', opts)
-                map('n', 'K', '<cmd>lua vim.lsp.buf.hover()<CR>', opts)
-                map('n', '<c-k>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
-                map('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<CR>', opts)
-                map('n', '<leader>e', '<cmd>lua vim.diagnostic.open_float()<CR>', opts)
-                map('n', '<leader>f', '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
-                map('n', ',r', '<cmd>lua vim.lsp.buf.references()<CR>', opts)
-                map('n', ',N', '<cmd>lua vim.diagnostic.goto_next()<CR>', opts)
-                map('n', ',P', '<cmd>lua vim.diagnostic.goto_prev()<CR>', opts)
-                map('n', ',q', '<cmd>lua vim.diagnostic.setloclist()<CR>', opts)
 
                 if client.resolved_capabilities.document_formatting then
                     vim.cmd([[
@@ -130,7 +160,7 @@ require('packer').startup(function(use)
                         ' text= texthl=DiagnosticSignWarn linehl= ' ..
                         'numhl=DiagnosticLineNrWarn')
                 end
-                vim.diagnostic.config({underline = false})
+                vim.diagnostic.config({ underline = false })
             end
 
             local capabilities = require('cmp_nvim_lsp').update_capabilities(
@@ -145,9 +175,9 @@ require('packer').startup(function(use)
             end
         end
     }
-    use {'machakann/vim-sandwich'}
-    use {'mhinz/vim-signify'}
-    use {'kshenoy/vim-signature'}
+    use { 'machakann/vim-sandwich' }
+    use { 'mhinz/vim-signify' }
+    use { 'kshenoy/vim-signature' }
     use {
         'onsails/lspkind-nvim',
         config = function()
@@ -171,8 +201,8 @@ require('packer').startup(function(use)
                 cmd = cmd .. string.format('\'*.%s\' ', ext)
             end
             vim.g.gutentags_define_advanced_commands = 1
-            vim.g.gutentags_ctags_exclude = {'vendor/*', 'linux/*'}
-            vim.g.gutentags_project_root = {'.git'}
+            vim.g.gutentags_ctags_exclude = { 'vendor/*', 'linux/*' }
+            vim.g.gutentags_project_root = { '.git' }
             vim.g.gutentags_file_list_command = {
                 markers = {
                     ['.git'] = cmd,
@@ -183,20 +213,19 @@ require('packer').startup(function(use)
     use {
         'vimwiki/vimwiki',
         config = function()
-            local util = require('util')
             map('n', '<leader>ww', ':VimwikiIndex<cr>')
-            vim.g.vimwiki_list = {{path = '~/Private/wiki'}}
+            vim.g.vimwiki_list = { { path = '~/Private/wiki' } }
         end
     }
     use {
         'junegunn/fzf.vim',
-        requires = {'junegunn/fzf'},
+        requires = { 'junegunn/fzf' },
         config = function()
             local mappings = {
-                {',f', ':Files'},
-                {',b', ':Buffers'},
-                {',g', ':Rg'},
-                {',t', ':Tags'}
+                { ',f', ':Files' },
+                { ',b', ':Buffers' },
+                { ',g', ':Rg' },
+                { ',t', ':Tags' }
             }
             for _, v in ipairs(mappings) do
                 local seq, cmd = v[1], v[2]
@@ -215,8 +244,8 @@ require('packer').startup(function(use)
             })
         end
     }
-    use {'hrsh7th/vim-vsnip'}
-    use {'hrsh7th/cmp-nvim-lsp'}
+    use { 'hrsh7th/vim-vsnip' }
+    use { 'hrsh7th/cmp-nvim-lsp' }
     use {
         'hrsh7th/nvim-cmp',
         config = function()
@@ -229,10 +258,10 @@ require('packer').startup(function(use)
                     ['<C-b>'] = cmp.mapping(cmp.mapping.scroll_docs(-4)),
                     ['<C-f>'] = cmp.mapping(cmp.mapping.scroll_docs(4)),
                     ['<Tab>'] = function(fallback)
-						local line, col = unpack(vim.api.nvim_win_get_cursor(0))
-						local txt = vim.api.nvim_buf_get_lines(0, line - 1,
+                        local line, col = unpack(vim.api.nvim_win_get_cursor(0))
+                        local txt = vim.api.nvim_buf_get_lines(0, line - 1,
                             line, true)[1]
-						local before = txt:sub(col, col)
+                        local before = txt:sub(col, col)
                         if cmp.visible() then
                             cmp.select_next_item()
                         elseif before ~= '' and before:match('%s') == nil then
@@ -252,7 +281,7 @@ require('packer').startup(function(use)
                 },
                 snippet = {
                     expand = function(args)
-                         vim.fn["vsnip#anonymous"](args.body)
+                        vim.fn["vsnip#anonymous"](args.body)
                     end,
                 },
                 sources = cmp.config.sources({
@@ -264,33 +293,34 @@ require('packer').startup(function(use)
                     format = require('lspkind').cmp_format()
                 },
             })
-          end
+        end
     }
     use {
         'kyazdani42/nvim-tree.lua',
-        requires = {'kyazdani42/nvim-web-devicons', opt = true},
+        requires = { 'kyazdani42/nvim-web-devicons', opt = true },
         config = function()
+            require('nvim-tree').setup({})
             map('n', '<leader>t', ':NvimTreeToggle<cr>')
         end
     }
     use {
         'hoob3rt/lualine.nvim',
-        requires = {'kyazdani42/nvim-web-devicons', opt = true},
+        requires = { 'kyazdani42/nvim-web-devicons', opt = true },
         config = function()
             require('lualine').setup({
                 options = {
                     theme = 'seoul256',
-                    section_separators = {'', ''},
-                    component_separators = {'', ''},
+                    section_separators = { '', '' },
+                    component_separators = { '', '' },
                     icons_enabled = true,
                 },
                 sections = {
-                    lualine_a = {{'mode', upper = true}},
-                    lualine_b = {{'branch', icon = ''}},
-                    lualine_c = {{'filename', file_status = true}},
+                    lualine_a = { { 'mode', upper = true } },
+                    lualine_b = { { 'branch', icon = '' } },
+                    lualine_c = { { 'filename', file_status = true } },
                     lualine_x = {},
-                    lualine_y = {'filetype'},
-                    lualine_z = {'location'},
+                    lualine_y = { 'filetype' },
+                    lualine_z = { 'location' },
                 },
                 inactive_sections = {}
             })
@@ -350,8 +380,8 @@ opt('w', 'wrap', false)
 map('v', '<space>', 'zz')
 map('n', '<space>', 'zz')
 
-map('i', '<s-tab>', 'pumvisible() ? "\\<C-p>" : "\\<tab>"', {expr = true})
-map('i', '<tab>', 'pumvisible() ? "\\<C-n>" : "\\<tab>"', {expr = true})
+map('i', '<s-tab>', 'pumvisible() ? "\\<C-p>" : "\\<tab>"', { expr = true })
+map('i', '<tab>', 'pumvisible() ? "\\<C-n>" : "\\<tab>"', { expr = true })
 
 map('n', '<leader><leader>', ':set invpaste paste?<cr>')
 map('n', '<leader>n', ':set invnumber number?<cr>')

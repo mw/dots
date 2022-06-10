@@ -5,7 +5,7 @@
     nixpkgs.url = "nixpkgs/22.05";
   };
 
-  outputs = { self, nixpkgs, ... } @ args: {
+  outputs = { self, nixpkgs }: {
     packages = nixpkgs.lib.genAttrs nixpkgs.lib.platforms.all
       (system:
         let
@@ -40,10 +40,10 @@
               htop
               iotop
               jq
-              locale
               mosh
               neovim
               nodejs
+              nodePackages.vscode-langservers-extracted
               python39
               restic
               ripgrep
@@ -51,11 +51,13 @@
               rust-analyzer
               rustc
               rustfmt
+              sumneko-lua-language-server
               starship
               tmux
               unzip
               zoxide
               zsh
+              python39Packages.black
               python39Packages.python-lsp-black
               python39Packages.python-lsp-server
               python39Packages.requests
