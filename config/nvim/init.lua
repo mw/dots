@@ -225,6 +225,7 @@ require('packer').startup(function(use)
                 { ',f', ':Files' },
                 { ',b', ':Buffers' },
                 { ',g', ':Rg' },
+                { '<Leader>g', ':Rg <C-R>=expand("<cword>")<cr>' },
                 { ',t', ':Tags' }
             }
             for _, v in ipairs(mappings) do
