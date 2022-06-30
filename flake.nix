@@ -33,6 +33,7 @@
               gnutar
               htop
               jq
+              lsd
               mosh
               neovim
               restic

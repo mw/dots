@@ -85,6 +85,9 @@ if command -v nix &> /dev/null; then
 else
     echo "nix not found"
 fi
+if command -v lsd &> /dev/null; then
+    alias ls=lsd
+fi
 if command -v zoxide &> /dev/null; then
     eval "$(zoxide init zsh)"
 fi
