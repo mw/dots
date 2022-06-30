@@ -39,6 +39,7 @@
               restic
               ripgrep
               starship
+              tailscale
               tmux
               unzip
               wordnet
