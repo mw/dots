@@ -214,7 +214,13 @@ require('packer').startup(function(use)
         'vimwiki/vimwiki',
         config = function()
             map('n', '<leader>ww', ':VimwikiIndex<cr>')
-            vim.g.vimwiki_list = { { path = '~/Private/wiki' } }
+            vim.g.vimwiki_list = {
+                {
+                    path = '~/Private/wiki',
+                    syntax = 'markdown',
+                    ext = '.md'
+                }
+            }
         end
     }
     use {

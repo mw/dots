@@ -24,44 +24,51 @@
             paths = with pkgs; [
               bash
               bat
-              cargo
-              clang
-              clippy
+              coreutils-prefixed
               diffutils
               fd
               fzf
               gawk
               git
               gnutar
+              htop
+              jq
+              mosh
+              neovim
+              restic
+              ripgrep
+              starship
+              tmux
+              unzip
+              wordnet
+              zoxide
+              zsh
+            ] ++ localePkgs;
+            extraOutputsToInstall = [ "man" "doc" ];
+          };
+          dev = pkgs.buildEnv {
+            name = "dev";
+            paths = with pkgs; [
+              cargo
+              clang
+              clippy
               go
               gopls
               gotools
               go-tools
-              htop
-              iotop
-              jq
-              mosh
-              neovim
               nodejs
               nodePackages.vscode-langservers-extracted
               python39
-              restic
-              ripgrep
+              python39Packages.black
+              python39Packages.python-lsp-black
+              python39Packages.python-lsp-server
+              python39Packages.requests
               rnix-lsp
               rust-analyzer
               rustc
               rustfmt
               sumneko-lua-language-server
-              starship
-              tmux
-              unzip
-              zoxide
-              zsh
-              python39Packages.black
-              python39Packages.python-lsp-black
-              python39Packages.python-lsp-server
-              python39Packages.requests
-            ] ++ localePkgs;
+            ];
             extraOutputsToInstall = [ "man" "doc" ];
           };
         }
