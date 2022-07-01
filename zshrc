@@ -78,10 +78,6 @@ if command -v nix &> /dev/null; then
     if [[ $? -ne 0 ]]; then
         nix profile install ${HOME}/dots/#basepkgs
     fi
-    archive_path="${HOME}/.nix-profile/lib/locale/locale-archive"
-    if [[ -e ${archive_path} ]]; then
-        export LOCALE_ARCHIVE=${archive_path}
-    fi
 else
     echo "nix not found"
 fi

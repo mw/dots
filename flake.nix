@@ -54,6 +54,7 @@
               cargo
               clang
               clippy
+              ctags
               go
               gopls
               gotools

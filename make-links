@@ -8,6 +8,7 @@ config/starship.toml
 gitconfig
 gitignore
 tmux.conf
+zshenv
 zshrc
 "
 
