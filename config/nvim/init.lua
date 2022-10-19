@@ -163,8 +163,7 @@ require('packer').startup(function(use)
                 vim.diagnostic.config({ underline = false })
             end
 
-            local capabilities = require('cmp_nvim_lsp').update_capabilities(
-                vim.lsp.protocol.make_client_capabilities())
+            local capabilities = require('cmp_nvim_lsp').default_capabilities()
             local defaults = {
                 on_attach = on_attach,
                 capabilities = capabilities

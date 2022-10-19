@@ -2,7 +2,7 @@
   description = "basepkgs";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/22.05";
+    nixpkgs.url = "nixpkgs/nixpkgs-unstable";
   };
 
   outputs = { self, nixpkgs }: {
