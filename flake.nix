@@ -61,11 +61,7 @@
               go-tools
               nodejs
               nodePackages.vscode-langservers-extracted
-              python39
-              python39Packages.black
-              python39Packages.python-lsp-black
-              python39Packages.python-lsp-server
-              python39Packages.requests
+              python3Full
               rnix-lsp
               rust-analyzer
               rustc
