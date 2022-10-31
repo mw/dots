@@ -123,7 +123,7 @@ require('packer').startup(function(use)
                     })
                 end
 
-                if client.resolved_capabilities.document_formatting then
+                if client.server_capabilities.document_formatting then
                     vim.cmd([[
                         augroup formatting
                         au!
