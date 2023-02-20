@@ -24,34 +24,34 @@ end
 
 -- plugin configuration
 
-local install_path = vim.fn.stdpath('data') ..
-    '/site/pack/packer/start/packer.nvim'
-if vim.fn.empty(vim.fn.glob(install_path)) > 0 then
-    packer_bootstrap = vim.fn.system({
-        'git', 'clone', '--depth', '1',
-        'https://github.com/wbthomason/packer.nvim',
-        install_path
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not vim.loop.fs_stat(lazypath) then
+    vim.fn.system({
+        "git",
+        "clone",
+        "--filter=blob:none",
+        "https://github.com/folke/lazy.nvim.git",
+        "--branch=stable",
+        lazypath,
     })
 end
+vim.opt.rtp:prepend(lazypath)
 
-require('packer').startup(function(use)
-    use {
-        'wbthomason/packer.nvim',
+require('lazy').setup({
+    {
+        'folke/tokyonight.nvim',
+        priority = 1000,
         config = function()
-            map('n', '<leader>pc', ':PackerCompile<cr>')
-            map('n', '<leader>ps', ':PackerSync<cr>')
+            require("tokyonight").setup({
+                style = "storm",
+                lualine_bold = false,
+            })
+            vim.cmd('colorscheme tokyonight')
         end
-    }
-    use {
-        'junegunn/seoul256.vim',
-        config = function()
-            vim.g.seoul256_background = 236
-            vim.cmd('colorscheme seoul256')
-        end
-    }
-    use {
+    },
+    { 'folke/which-key.nvim', opts = {} },
+    {
         'neovim/nvim-lspconfig',
-        after = { 'nvim-cmp', 'seoul256.vim' },
         config = function()
             local cfg = require('lspconfig')
             local servers = {
@@ -75,7 +75,7 @@ require('packer').startup(function(use)
                     }
                 },
                 { 'pylsp', {} },
-                { 'sumneko_lua', {
+                { 'lua_ls', {
                     settings = {
                         Lua = {
                             runtime = {
@@ -86,6 +86,7 @@ require('packer').startup(function(use)
                             },
                             workspace = {
                                 library = vim.api.nvim_get_runtime_file("", true),
+                                checkThirdParty = false,
                             },
                             telemetry = {
                                 enable = false,
@@ -94,9 +95,7 @@ require('packer').startup(function(use)
                     }
 
                 } },
-                { 'svelte', {} },
                 { 'rust_analyzer', {} },
-                { 'tailwindcss', {} },
                 { 'tsserver', {} }
             }
 
@@ -131,35 +130,6 @@ require('packer').startup(function(use)
                         augroup END
                     ]])
                 end
-
-                -- Tone down diagnostics
-                for _, hl in ipairs({
-                    'DiagnosticVirtualTextHint',
-                    'DiagnosticVirtualTextInfo',
-                    'DiagnosticVirtualTextWarn',
-                    'DiagnosticVirtualTextError'
-                }) do
-                    vim.cmd('highlight ' .. hl .. ' guifg=#606060')
-                end
-                for _, hl in ipairs({
-                    'DiagnosticLineNrHint',
-                    'DiagnosticLineNrInfo',
-                    'DiagnosticLineNrWarn',
-                    'DiagnosticLineNrError'
-                }) do
-                    vim.cmd('highlight ' .. hl .. ' guibg=#4B4B4B ' ..
-                        ' guifg=#FFA500 gui=bold')
-                end
-                for _, sign in ipairs({
-                    'DiagnosticSignHint',
-                    'DiagnosticSignInfo',
-                    'DiagnosticSignWarn',
-                    'DiagnosticSignError'
-                }) do
-                    vim.cmd('sign define ' .. sign ..
-                        ' text= texthl=DiagnosticSignWarn linehl= ' ..
-                        'numhl=DiagnosticLineNrWarn')
-                end
                 vim.diagnostic.config({ underline = false })
             end
 
@@ -173,24 +143,25 @@ require('packer').startup(function(use)
                 cfg[lsp].setup(opts)
             end
         end
-    }
-    use { 'machakann/vim-sandwich' }
-    use { 'mhinz/vim-signify' }
-    use { 'kshenoy/vim-signature' }
-    use {
+    },
+    { 'machakann/vim-sandwich' },
+    { 'mhinz/vim-signify' },
+    { 'kshenoy/vim-signature' },
+    {
         'onsails/lspkind-nvim',
         config = function()
             require('lspkind').init({})
         end
-    }
-    use {
+    },
+    {
         'tpope/vim-fugitive',
         config = function()
             map('n', '<leader>B', ':Git blame<cr>')
         end
-    }
-    use {
+    },
+    {
         'ludovicchabant/vim-gutentags',
+        enable = false,
         config = function()
             local cmd = 'git ls-files -co '
             local exts = {
@@ -208,8 +179,8 @@ require('packer').startup(function(use)
                 }
             }
         end
-    }
-    use {
+    },
+    {
         'vimwiki/vimwiki',
         config = function()
             map('n', '<leader>ww', ':VimwikiIndex<cr>')
@@ -221,10 +192,12 @@ require('packer').startup(function(use)
                 }
             }
         end
-    }
-    use {
+    },
+    {
         'junegunn/fzf.vim',
-        requires = { 'junegunn/fzf' },
+        dependencies = {
+            'junegunn/fzf',
+        },
         config = function()
             local mappings = {
                 { ',f', ':Files' },
@@ -238,22 +211,60 @@ require('packer').startup(function(use)
                 map('n', seq, string.format('%s<cr>', cmd))
             end
         end
-    }
-    use {
+    },
+    {
         'nvim-treesitter/nvim-treesitter',
-        run = 'TSUpdate',
+        dependencies = {
+            'nvim-treesitter/nvim-treesitter-textobjects',
+        },
+        build = 'TSUpdate',
         config = function()
             require('nvim-treesitter.configs').setup({
+                ensure_installed = 'all',
                 highlight = {
                     enable = true
-                }
+                },
+                incremental_selection = {
+                  enable = true,
+                  keymaps = {
+                    init_selection = '<m-o>',
+                    node_incremental = '<m-o>',
+                    node_decremental = '<m-i>',
+                  }
+                },
+                textobjects = {
+                    move = {
+                        enable = true,
+                        set_jumps = true,
+                    },
+                    select = {
+                        enable = true,
+                        lookahead = true,
+                        keymaps = {
+                            ['af'] = '@function.outer',
+                            ['if'] = '@function.inner',
+                        },
+                    },
+                    swap = {
+                        enable = true,
+                        swap_next = {
+                            ['<m-l>'] = '@parameter.inner',
+                        },
+                        swap_previous = {
+                            ['<m-h>'] = '@parameter.inner',
+                        }
+                    },
+                },
             })
-        end
-    }
-    use { 'hrsh7th/vim-vsnip' }
-    use { 'hrsh7th/cmp-nvim-lsp' }
-    use {
+        end,
+    },
+    {
         'hrsh7th/nvim-cmp',
+        dependencies = {
+            'hrsh7th/vim-vsnip',
+            'hrsh7th/cmp-nvim-lsp',
+            'onsails/lspkind-nvim'
+        },
         config = function()
             local cmp = require('cmp')
             cmp.setup({
@@ -261,8 +272,8 @@ require('packer').startup(function(use)
                     autocomplete = false
                 },
                 mapping = {
-                    ['<C-b>'] = cmp.mapping(cmp.mapping.scroll_docs(-4)),
-                    ['<C-f>'] = cmp.mapping(cmp.mapping.scroll_docs(4)),
+                    ['<C-b>'] = cmp.mapping.scroll_docs(-4),
+                    ['<C-f>'] = cmp.mapping.scroll_docs(4),
                     ['<Tab>'] = function(fallback)
                         local line, col = unpack(vim.api.nvim_win_get_cursor(0))
                         local txt = vim.api.nvim_buf_get_lines(0, line - 1,
@@ -300,22 +311,26 @@ require('packer').startup(function(use)
                 },
             })
         end
-    }
-    use {
+    },
+    {
         'kyazdani42/nvim-tree.lua',
-        requires = { 'kyazdani42/nvim-web-devicons', opt = true },
+        dependencies = {
+            'kyazdani42/nvim-web-devicons'
+        },
         config = function()
             require('nvim-tree').setup({})
             map('n', '<leader>t', ':NvimTreeToggle<cr>')
         end
-    }
-    use {
-        'hoob3rt/lualine.nvim',
-        requires = { 'kyazdani42/nvim-web-devicons', opt = true },
+    },
+    {
+        'nvim-lualine/lualine.nvim',
+        dependencies = {
+            'kyazdani42/nvim-web-devicons',
+        },
         config = function()
             require('lualine').setup({
                 options = {
-                    theme = 'seoul256',
+                    theme = 'tokyonight',
                     section_separators = { '', '' },
                     component_separators = { '', '' },
                     icons_enabled = true,
@@ -332,10 +347,7 @@ require('packer').startup(function(use)
             })
         end
     }
-    if packer_bootstrap then
-        require('packer').sync()
-    end
-end)
+}, {})
 
 -- global options
 opt('o', 'backspace', 'indent,eol,nostop')
@@ -408,5 +420,16 @@ map('n', ',p', ':cprev<cr>')
 vim.cmd('autocmd TermEnter * setlocal nonumber')
 
 -- trailing spaces
-vim.cmd('highlight ExtraWhitespace guifg=#ff0000 guibg=#555555')
+vim.cmd('highlight ExtraWhitespace guibg=#403050')
 vim.cmd('match ExtraWhitespace /\\s\\+$/')
+
+-- toggle diagnostics
+local diagnostics_active = true
+vim.keymap.set('n', '<m-d>', function()
+    diagnostics_active = not diagnostics_active
+    if diagnostics_active then
+        vim.diagnostic.show()
+    else
+        vim.diagnostic.hide()
+    end
+end)
