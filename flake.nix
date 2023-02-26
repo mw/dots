@@ -17,6 +17,10 @@
               [ pkgs.darwin.locale ]
             else
               [ pkgs.glibcLocales pkgs.locale ];
+          pypkgs = pkgs.python3.withPackages (pp: with pp; [
+            pandas
+            requests
+          ]);
         in
         {
           basepkgs = pkgs.buildEnv {
@@ -24,7 +28,9 @@
             paths = with pkgs; [
               bash
               bat
+              clang
               coreutils-prefixed
+              ctags
               diffutils
               fd
               fzf
@@ -34,39 +40,51 @@
               htop
               jq
               lsd
+              luajitPackages.lua-lsp
               mosh
               neovim
+              nodePackages.vscode-langservers-extracted
               restic
               ripgrep
+              rnix-lsp
+              sqlite
               starship
               tailscale
               tmux
+              tree
               unzip
               wordnet
               zoxide
               zsh
+              zstd
             ] ++ localePkgs;
             extraOutputsToInstall = [ "man" "doc" ];
           };
-          dev = pkgs.buildEnv {
-            name = "dev";
+          py = pkgs.buildEnv {
+            name = "py";
+            paths = with pkgs; [
+              pypkgs
+            ];
+            extraOutputsToInstall = [ "man" "doc" ];
+          };
+          rs = pkgs.buildEnv {
+            name = "rs";
             paths = with pkgs; [
               cargo
-              clang
               clippy
-              ctags
-              go
-              gopls
-              gotools
-              go-tools
-              nodejs
-              nodePackages.vscode-langservers-extracted
-              python3Full
-              rnix-lsp
               rust-analyzer
               rustc
               rustfmt
-              sumneko-lua-language-server
+            ];
+            extraOutputsToInstall = [ "man" "doc" ];
+          };
+          go = pkgs.buildEnv {
+            name = "go";
+            paths = with pkgs; [
+              go
+              golangci-lint
+              gopls
+              gotools
             ];
             extraOutputsToInstall = [ "man" "doc" ];
           };

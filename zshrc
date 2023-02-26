@@ -76,7 +76,7 @@ fi
 if command -v nix &> /dev/null; then
     nix profile list | grep 'basepkgs' >/dev/null 2>&1
     if [[ $? -ne 0 ]]; then
-        nix profile install ${HOME}/dots/#basepkgs
+        nix profile install ${HOME}/dots#basepkgs
     fi
 else
     echo "nix not found"
