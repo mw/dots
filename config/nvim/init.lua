@@ -74,8 +74,18 @@ require('lazy').setup({
                             'go.mod', '.git')
                     }
                 },
-                { 'pylsp', {} },
+                { 'ruff_lsp', {} },
+                {
+                    'pylsp', {
+                        settings = {
+                            formatComand = {
+                                "black"
+                            }
+                        }
+                    }
+                },
                 { 'lua_ls', {
+                    cmd = { 'lua-lsp' },
                     settings = {
                         Lua = {
                             runtime = {
@@ -122,11 +132,11 @@ require('lazy').setup({
                     })
                 end
 
-                if client.server_capabilities.document_formatting then
+                if client.server_capabilities.documentFormattingProvider then
                     vim.cmd([[
                         augroup formatting
                         au!
-                        autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting()
+                        autocmd BufWritePre <buffer> lua vim.lsp.buf.format({ async=false })
                         augroup END
                     ]])
                 end
@@ -160,27 +170,6 @@ require('lazy').setup({
         end
     },
     {
-        'ludovicchabant/vim-gutentags',
-        enable = false,
-        config = function()
-            local cmd = 'git ls-files -co '
-            local exts = {
-                'c', 'h', 'cc', 'go', 'py', 'rs', 'ts', 'tsx'
-            }
-            for _, ext in pairs(exts) do
-                cmd = cmd .. string.format('\'*.%s\' ', ext)
-            end
-            vim.g.gutentags_define_advanced_commands = 1
-            vim.g.gutentags_ctags_exclude = { 'vendor/*', 'linux/*' }
-            vim.g.gutentags_project_root = { '.git' }
-            vim.g.gutentags_file_list_command = {
-                markers = {
-                    ['.git'] = cmd,
-                }
-            }
-        end
-    },
-    {
         'vimwiki/vimwiki',
         config = function()
             map('n', '<leader>ww', ':VimwikiIndex<cr>')
@@ -191,6 +180,7 @@ require('lazy').setup({
                     ext = '.md'
                 }
             }
+            vim.cmd('call vimwiki#vars#init()')
         end
     },
     {
@@ -235,7 +225,7 @@ require('lazy').setup({
                     "typescript",
                 },
                 highlight = {
-                    enable = true
+                    enable = true,
                 },
                 incremental_selection = {
                   enable = true,
@@ -244,6 +234,9 @@ require('lazy').setup({
                     node_incremental = '<m-o>',
                     node_decremental = '<m-i>',
                   }
+                },
+                indent = {
+                    enable = true,
                 },
                 textobjects = {
                     move = {
@@ -261,15 +254,25 @@ require('lazy').setup({
                     swap = {
                         enable = true,
                         swap_next = {
-                            ['<m-l>'] = '@parameter.inner',
+                            ['<m-s-j>'] = '@parameter.inner',
                         },
                         swap_previous = {
-                            ['<m-h>'] = '@parameter.inner',
+                            ['<m-s-k>'] = '@parameter.inner',
                         }
                     },
                 },
             })
         end,
+    },
+    {
+        'drybalka/tree-climber.nvim',
+        config = function()
+            local tc = require('tree-climber')
+            local opts = { noremap = true, silent = true }
+            vim.keymap.set({'n', 'v', 'o'}, '<m-j>', tc.goto_next, opts)
+            vim.keymap.set({'n', 'v', 'o'}, '<m-k>', tc.goto_prev, opts)
+            vim.keymap.set({'n', 'v', 'o'}, '<m-h>', tc.goto_parent, opts)
+        end
     },
     {
         'hrsh7th/nvim-cmp',

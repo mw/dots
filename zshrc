@@ -78,6 +78,7 @@ if command -v nix &> /dev/null; then
     if [[ $? -ne 0 ]]; then
         nix profile install ${HOME}/dots#basepkgs
     fi
+    export TERMINFO_DIRS=${HOME}/.nix-profile/share/terminfo
 else
     echo "nix not found"
 fi
@@ -89,6 +90,9 @@ if command -v zoxide &> /dev/null; then
 fi
 if command -v starship &> /dev/null; then
     eval $(starship init zsh)
+fi
+if command -v direnv &> /dev/null; then
+    eval "$(direnv hook zsh)"
 fi
 if command -v fzf-share &> /dev/null; then
     fzf_keys=$(fzf-share)/key-bindings.zsh
