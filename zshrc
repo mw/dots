@@ -70,6 +70,10 @@ function preexec() {
     tab_name=$cmd[1]:t
 }
 
+if [ -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ]; then
+  . '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
+fi
+
 if [ -e ${HOME}/.nix-profile/etc/profile.d/nix.sh ]; then
     source ${HOME}/.nix-profile/etc/profile.d/nix.sh;
 fi
