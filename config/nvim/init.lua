@@ -49,6 +49,7 @@ require('lazy').setup({
             vim.cmd('colorscheme tokyonight')
         end
     },
+    { 'github/copilot.vim' },
     { 'folke/which-key.nvim', opts = {} },
     {
         'neovim/nvim-lspconfig',
@@ -118,6 +119,7 @@ require('lazy').setup({
                     { 'gi', vim.lsp.buf.implementation },
                     { '<leader>e', vim.diagnostic.open_float },
                     { '<leader>f', vim.lsp.buf.rename },
+                    { ',a', vim.lsp.buf.code_action },
                     { ',r', vim.lsp.buf.references },
                     { ',N', vim.diagnostic.goto_next },
                     { ',P', vim.diagnostic.goto_prev },
@@ -173,6 +175,7 @@ require('lazy').setup({
         'vimwiki/vimwiki',
         config = function()
             map('n', '<leader>ww', ':VimwikiIndex<cr>')
+            map('i', '<c-space>', '<plug>VimwikiTableNextCell', { noremap = false })
             vim.g.vimwiki_list = {
                 {
                     path = '~/Private/wiki',
@@ -290,7 +293,7 @@ require('lazy').setup({
                 mapping = {
                     ['<C-b>'] = cmp.mapping.scroll_docs(-4),
                     ['<C-f>'] = cmp.mapping.scroll_docs(4),
-                    ['<Tab>'] = function(fallback)
+                    ['<m-Tab>'] = function(fallback)
                         local line, col = unpack(vim.api.nvim_win_get_cursor(0))
                         local txt = vim.api.nvim_buf_get_lines(0, line - 1,
                             line, true)[1]
@@ -303,7 +306,7 @@ require('lazy').setup({
                             fallback()
                         end
                     end,
-                    ['<S-Tab>'] = function(fallback)
+                    ['<m-S-Tab>'] = function(fallback)
                         if cmp.visible() then
                             cmp.select_prev_item()
                         else
@@ -414,8 +417,8 @@ opt('w', 'wrap', false)
 map('v', '<space>', 'zz')
 map('n', '<space>', 'zz')
 
-map('i', '<s-tab>', 'pumvisible() ? "\\<C-p>" : "\\<tab>"', { expr = true })
-map('i', '<tab>', 'pumvisible() ? "\\<C-n>" : "\\<tab>"', { expr = true })
+map('i', '<m-s-tab>', 'pumvisible() ? "\\<C-p>" : "\\<tab>"', { expr = true })
+map('i', '<m-tab>', 'pumvisible() ? "\\<C-n>" : "\\<tab>"', { expr = true })
 
 map('n', '<leader><leader>', ':set invpaste paste?<cr>')
 map('n', '<leader>n', ':set invnumber number?<cr>')

@@ -5,6 +5,6 @@ archive_path="${HOME}/.nix-profile/lib/locale/locale-archive"
 if [[ -e ${archive_path} ]]; then
     export LOCALE_ARCHIVE=${archive_path}
 fi
-if [[ -e {HOME}/.cargo/env ]]; then
+if [[ -e ${HOME}/.cargo/env ]]; then
     . "${HOME}/.cargo/env"
 fi

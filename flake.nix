@@ -19,15 +19,14 @@
           pypkgs = pkgs.python3.withPackages (pp: with pp; [
             httpx
             pandas
-            pip
             python-lsp-server
-            pytorch
           ]);
         in
         {
           basepkgs = pkgs.buildEnv {
             name = "basepkgs";
             paths = with pkgs; [
+              b3sum
               bash
               bat
               coreutils-prefixed
@@ -38,20 +37,24 @@
               fzf
               gawk
               git
+              git-lfs
+              gnutar
               go
               golangci-lint
               gopls
               gotools
-              gnutar
               htop
               jq
               lsd
               luajitPackages.lua-lsp
+              mold
               mosh
               ncurses5
               neovim
+              nmap
               nodePackages.vscode-langservers-extracted
               pypkgs
+              rclone
               restic
               ripgrep
               rnix-lsp
@@ -61,8 +64,9 @@
               tailscale
               tmux
               tree
+              tree-sitter
               unzip
-              wordnet
+              uv
               zoxide
               zsh
               zstd
