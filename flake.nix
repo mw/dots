@@ -19,6 +19,7 @@
           pypkgs = pkgs.python3.withPackages (pp: with pp; [
             httpx
             pandas
+            pip
             python-lsp-server
           ]);
         in
