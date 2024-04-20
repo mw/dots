@@ -25,6 +25,11 @@ key = "N"
 mods = "Control|Alt"
 
 [[keyboard.bindings]]
+action = "ToggleMaximized"
+key = "Enter"
+mods = "Control|Shift"
+
+[[keyboard.bindings]]
 chars = "\u0001\u006e"
 key = "N"
 mods = "Control|Shift"
