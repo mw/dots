@@ -40,6 +40,7 @@ vim.opt.rtp:prepend(lazypath)
 require('lazy').setup({
     {
         'folke/tokyonight.nvim',
+        commit = '9bf9ec53d5e87b025e2404069b71e7ebdc3a13e5',
         priority = 1000,
         config = function()
             require("tokyonight").setup({
@@ -50,7 +51,11 @@ require('lazy').setup({
         end
     },
     { 'github/copilot.vim' },
-    { 'folke/which-key.nvim', opts = {} },
+    {
+        'folke/which-key.nvim',
+        commit = '4433e5ec9a507e5097571ed55c02ea9658fb268a',
+        opts = {}
+    },
     {
         'neovim/nvim-lspconfig',
         config = function()
@@ -156,23 +161,38 @@ require('lazy').setup({
             end
         end
     },
-    { 'machakann/vim-sandwich' },
-    { 'mhinz/vim-signify' },
-    { 'kshenoy/vim-signature' },
     {
-        'onsails/lspkind-nvim',
+        'machakann/vim-sandwich',
+        commit = '74cf93d58ccc567d8e2310a69860f1b93af19403'
+    },
+    {
+        'lewis6991/gitsigns.nvim',
+        commit = '7e38f07cab0e5387f9f41e92474db174a63a4725',
+        config = function()
+            require('gitsigns').setup()
+        end
+    },
+    {
+        'kshenoy/vim-signature',
+        commit = "6bc3dd1294a22e897f0dcf8dd72b85f350e306bc"
+    },
+    {
+        'onsails/lspkind.nvim',
+        commit = '1735dd5a5054c1fb7feaf8e8658dbab925f4f0cf',
         config = function()
             require('lspkind').init({})
         end
     },
     {
         'tpope/vim-fugitive',
+        commit = 'dac8e5c2d85926df92672bf2afb4fc48656d96c7',
         config = function()
             map('n', '<leader>B', ':Git blame<cr>')
         end
     },
     {
         'vimwiki/vimwiki',
+        commit = '69318e74c88ef7677e2496fd0a836446ceac61e8',
         config = function()
             map('n', '<leader>ww', ':VimwikiIndex<cr>')
             map('i', '<c-space>', '<plug>VimwikiTableNextCell', { noremap = false })
@@ -188,8 +208,13 @@ require('lazy').setup({
     },
     {
         'junegunn/fzf.vim',
+        commit = '45d96c9cb1213204479593236dfabf911ff15443',
         dependencies = {
-            'junegunn/fzf',
+            {
+                'junegunn/fzf',
+                commit = 'd8bfb6712d514fd6715135fd0e60df188831b566'
+            }
+
         },
         config = function()
             local mappings = {
@@ -213,17 +238,42 @@ require('lazy').setup({
         build = ':TSUpdate',
         config = function()
             require('nvim-treesitter.configs').setup({
+                auto_install = false,
                 ensure_installed = {
+                    "bash",
                     "c",
+                    "cmake",
                     "cpp",
                     "css",
-                    "lua",
+                    "csv",
+                    "dhall",
+                    "diff",
+                    "dockerfile",
+                    "git_config",
+                    "git_rebase",
+                    "gitcommit",
+                    "gitignore",
+                    "go",
+                    "gosum",
+                    "html",
                     "html",
                     "javascript",
+                    "json",
+                    "jsonc",
+                    "lua",
+                    "lua",
+                    "make",
                     "markdown",
                     "nix",
+                    "printf",
                     "python",
+                    "regex",
+                    "requirements",
                     "rust",
+                    "sql",
+                    "terraform",
+                    "tmux",
+                    "toml",
                     "tsx",
                     "typescript",
                 },
@@ -269,6 +319,7 @@ require('lazy').setup({
     },
     {
         'drybalka/tree-climber.nvim',
+        commit = '9b0c8c8358f575f924008945c74fd4f40d814cd7',
         config = function()
             local tc = require('tree-climber')
             local opts = { noremap = true, silent = true }
@@ -279,10 +330,20 @@ require('lazy').setup({
     },
     {
         'hrsh7th/nvim-cmp',
+        commit = 'ce16de5665c766f39c271705b17fff06f7bcb84f',
         dependencies = {
-            'hrsh7th/vim-vsnip',
-            'hrsh7th/cmp-nvim-lsp',
-            'onsails/lspkind-nvim'
+            {
+                'hrsh7th/vim-vsnip',
+                commit = '02a8e79295c9733434aab4e0e2b8c4b7cea9f3a9'
+            },
+            {
+                'hrsh7th/cmp-nvim-lsp',
+                commit = '5af77f54de1b16c34b23cba810150689a3a90312'
+            },
+            {
+                'onsails/lspkind-nvim',
+                commit = '1735dd5a5054c1fb7feaf8e8658dbab925f4f0cf'
+            }
         },
         config = function()
             local cmp = require('cmp')
@@ -332,9 +393,14 @@ require('lazy').setup({
         end
     },
     {
-        'kyazdani42/nvim-tree.lua',
+        'nvim-tree/nvim-web-devicons',
+        commit = 'b3468391470034353f0e5110c70babb5c62967d3'
+    },
+    {
+        'nvim-tree/nvim-tree.lua',
+        commit = '81eb8d519233c105f30dc0a278607e62b20502fd',
         dependencies = {
-            'kyazdani42/nvim-web-devicons'
+            'nvim-tree/nvim-web-devicons'
         },
         config = function()
             require('nvim-tree').setup({})
@@ -342,9 +408,20 @@ require('lazy').setup({
         end
     },
     {
+      'rmagatti/auto-session',
+        commit = '9e0a169b6fce8791278abbd110717b921afe634d',
+        config = function()
+            require("auto-session").setup({
+                log_level = "error",
+                auto_session_suppress_dirs = { "~/" },
+            })
+        end
+    },
+    {
         'nvim-lualine/lualine.nvim',
+        commit = '0a5a66803c7407767b799067986b4dc3036e1983',
         dependencies = {
-            'kyazdani42/nvim-web-devicons',
+            'nvim-tree/nvim-web-devicons',
         },
         config = function()
             require('lualine').setup({
