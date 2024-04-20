@@ -40,7 +40,7 @@ vim.opt.rtp:prepend(lazypath)
 require('lazy').setup({
     {
         'folke/tokyonight.nvim',
-        commit = '9bf9ec53d5e87b025e2404069b71e7ebdc3a13e5',
+        pin = true,
         priority = 1000,
         config = function()
             require("tokyonight").setup({
@@ -53,7 +53,7 @@ require('lazy').setup({
     { 'github/copilot.vim' },
     {
         'folke/which-key.nvim',
-        commit = '4433e5ec9a507e5097571ed55c02ea9658fb268a',
+        pin = true,
         opts = {}
     },
     {
@@ -163,36 +163,36 @@ require('lazy').setup({
     },
     {
         'machakann/vim-sandwich',
-        commit = '74cf93d58ccc567d8e2310a69860f1b93af19403'
+        pin = true
     },
     {
         'lewis6991/gitsigns.nvim',
-        commit = '7e38f07cab0e5387f9f41e92474db174a63a4725',
+        pin = true,
         config = function()
             require('gitsigns').setup()
         end
     },
     {
         'kshenoy/vim-signature',
-        commit = "6bc3dd1294a22e897f0dcf8dd72b85f350e306bc"
+        pin = true
     },
     {
         'onsails/lspkind.nvim',
-        commit = '1735dd5a5054c1fb7feaf8e8658dbab925f4f0cf',
+        pin = true,
         config = function()
             require('lspkind').init({})
         end
     },
     {
         'tpope/vim-fugitive',
-        commit = 'dac8e5c2d85926df92672bf2afb4fc48656d96c7',
+        pin = true,
         config = function()
             map('n', '<leader>B', ':Git blame<cr>')
         end
     },
     {
         'vimwiki/vimwiki',
-        commit = '69318e74c88ef7677e2496fd0a836446ceac61e8',
+        pin = true,
         config = function()
             map('n', '<leader>ww', ':VimwikiIndex<cr>')
             map('i', '<c-space>', '<plug>VimwikiTableNextCell', { noremap = false })
@@ -208,11 +208,11 @@ require('lazy').setup({
     },
     {
         'junegunn/fzf.vim',
-        commit = '45d96c9cb1213204479593236dfabf911ff15443',
+        pin = true,
         dependencies = {
             {
                 'junegunn/fzf',
-                commit = 'd8bfb6712d514fd6715135fd0e60df188831b566'
+                pin = true
             }
 
         },
@@ -319,7 +319,7 @@ require('lazy').setup({
     },
     {
         'drybalka/tree-climber.nvim',
-        commit = '9b0c8c8358f575f924008945c74fd4f40d814cd7',
+        pin = true,
         config = function()
             local tc = require('tree-climber')
             local opts = { noremap = true, silent = true }
@@ -330,19 +330,19 @@ require('lazy').setup({
     },
     {
         'hrsh7th/nvim-cmp',
-        commit = 'ce16de5665c766f39c271705b17fff06f7bcb84f',
+        pin = true,
         dependencies = {
             {
                 'hrsh7th/vim-vsnip',
-                commit = '02a8e79295c9733434aab4e0e2b8c4b7cea9f3a9'
+                pin = true
             },
             {
                 'hrsh7th/cmp-nvim-lsp',
-                commit = '5af77f54de1b16c34b23cba810150689a3a90312'
+                pin = true
             },
             {
                 'onsails/lspkind-nvim',
-                commit = '1735dd5a5054c1fb7feaf8e8658dbab925f4f0cf'
+                pin = true
             }
         },
         config = function()
@@ -394,11 +394,11 @@ require('lazy').setup({
     },
     {
         'nvim-tree/nvim-web-devicons',
-        commit = 'b3468391470034353f0e5110c70babb5c62967d3'
+        pin = true
     },
     {
         'nvim-tree/nvim-tree.lua',
-        commit = '81eb8d519233c105f30dc0a278607e62b20502fd',
+        pin = true,
         dependencies = {
             'nvim-tree/nvim-web-devicons'
         },
@@ -409,7 +409,7 @@ require('lazy').setup({
     },
     {
       'rmagatti/auto-session',
-        commit = '9e0a169b6fce8791278abbd110717b921afe634d',
+        pin = true,
         config = function()
             require("auto-session").setup({
                 log_level = "error",
@@ -419,7 +419,7 @@ require('lazy').setup({
     },
     {
         'nvim-lualine/lualine.nvim',
-        commit = '0a5a66803c7407767b799067986b4dc3036e1983',
+        pin = true,
         dependencies = {
             'nvim-tree/nvim-web-devicons',
         },
