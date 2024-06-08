@@ -224,6 +224,9 @@ require('lazy').setup({
                 { '<Leader>g', ':Rg <C-R>=expand("<cword>")<cr>' },
                 { ',t', ':Tags' }
             }
+            vim.g.fzf_vim = {
+                preview_window = { 'right:50%', 'alt-/' }
+            }
             for _, v in ipairs(mappings) do
                 local seq, cmd = v[1], v[2]
                 map('n', seq, string.format('%s<cr>', cmd))

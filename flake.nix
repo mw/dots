@@ -58,7 +58,6 @@
               rclone
               restic
               ripgrep
-              rnix-lsp
               rustup
               sqlite-interactive
               starship
