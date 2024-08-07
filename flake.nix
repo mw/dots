@@ -20,7 +20,6 @@
             httpx
             pandas
             pip
-            python-lsp-server
           ]);
         in
         {
