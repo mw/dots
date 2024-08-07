@@ -532,3 +532,37 @@ vim.keymap.set('n', '<m-d>', function()
         vim.diagnostic.hide()
     end
 end)
+
+-- tmux-send command
+local send_cmd = ''
+
+vim.keymap.set('n', ',,', function()
+    vim.ui.input({ prompt = 'tmux-send ❯ ' }, function(result)
+        if result == nil then
+            return
+        end
+        send_cmd = result
+    end)
+    if send_cmd == '' then
+        vim.cmd([[
+            augroup tmuxsend
+            au!
+            augroup END
+        ]])
+    else
+        vim.cmd([[
+            augroup tmuxsend
+            au!
+            autocmd BufWritePost <buffer> lua tmux_send()
+            augroup END
+        ]])
+        tmux_send()
+    end
+end)
+
+function tmux_send()
+    if send_cmd == '' then
+        return
+    end
+    vim.fn.system({ 'tmux', 'send-keys', '-t', '{last}', send_cmd, 'Enter' })
+end
