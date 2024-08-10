@@ -564,5 +564,6 @@ function tmux_send()
     if send_cmd == '' then
         return
     end
+    vim.fn.system({ 'tmux', 'send-keys', '-t', '{last}', 'C-c' })
     vim.fn.system({ 'tmux', 'send-keys', '-t', '{last}', send_cmd, 'Enter' })
 end
