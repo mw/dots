@@ -535,7 +535,6 @@ end)
 
 -- tmux-send command
 local send_cmd = ''
-
 vim.keymap.set('n', ',,', function()
     vim.ui.input({ prompt = 'tmux-send ❯ ' }, function(result)
         if result == nil then
@@ -553,7 +552,7 @@ vim.keymap.set('n', ',,', function()
         vim.cmd([[
             augroup tmuxsend
             au!
-            autocmd BufWritePost <buffer> lua tmux_send()
+            autocmd BufWritePost * lua tmux_send()
             augroup END
         ]])
         tmux_send()
