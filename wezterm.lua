@@ -81,7 +81,7 @@ config.keys = {
         action = wezterm.action.SendString('\x01(')
     },
     {
-        key = 'W',
+        key = 'w',
         mods = 'CMD',
         action = wezterm.action.CloseCurrentTab({ confirm = false }),
     },
