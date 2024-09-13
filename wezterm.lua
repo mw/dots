@@ -140,6 +140,11 @@ config.keys = {
         mods = 'CTRL',
         action = wezterm.action.ActivateCommandPalette
     },
+    {
+        key = 'Space',
+        mods = 'OPT',
+        action = wezterm.action.DisableDefaultAssignment
+    },
 }
 config.window_background_opacity = 1
 config.window_close_confirmation = 'NeverPrompt'

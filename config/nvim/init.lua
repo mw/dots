@@ -11,17 +11,6 @@ function map(mode, lhs, rhs, opts)
     vim.api.nvim_set_keymap(mode, lhs, rhs, options)
 end
 
-function update(dst, src)
-    local out = {}
-    for k, v in pairs(dst) do
-        out[k] = v
-    end
-    for k, v in pairs(src) do
-        out[k] = v
-    end
-    return out
-end
-
 -- plugin configuration
 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
@@ -49,6 +38,44 @@ require('lazy').setup({
             })
             vim.cmd('colorscheme tokyonight')
         end
+    },
+    {
+        "robitx/gp.nvim",
+        pin = true,
+        config = function()
+            require("gp").setup({
+                providers = {
+                    openai = {
+                        endpoint = "https://api.openai.com/v1/chat/completions",
+                        secret = os.getenv("OPENAI_API_KEY"),
+                    },
+                    anthropic = {
+                        endpoint = "https://api.anthropic.com/v1/messages",
+                        secret = os.getenv("ANTHROPIC_API_KEY"),
+                    },
+                    copilot = {
+                        endpoint = "https://api.githubcopilot.com/chat/completions",
+                        secret = {
+                            "bash",
+                            "-c",
+                            "cat ~/.config/github-copilot/hosts.json | sed -e 's/.*oauth_token...//;s/\".*//'",
+                        },
+                    },
+                },
+                default_chat_agent = "ChatClaude-3-5-Sonnet",
+                default_command_agent = "CodeCopilot"
+            })
+            -- Chat commands
+            map("n", "<M-Space><M-Space>", ":GpChatToggle<cr>")
+            map("n", "<M-Space><Space>", ":%GpChatNew vsplit<cr>")
+            map("v", "<M-Space><Space>", ":'<,'>GpChatPaste vsplit<cr>")
+            map("n", "<M-Space>f", ":GpChatFinder<cr>")
+            map("n", "<M-Space><cr>", ":GpChatRespond<cr>")
+            map("v", "<M-Space><cr>", ":'<,'>GpRewrite<cr>")
+            map("n", "<M-Space>d", ":GpChatDelete<cr>")
+            map("n", "<M-Space>g", ":GpStop<cr>")
+        end,
+
     },
     { 'github/copilot.vim' },
     {
@@ -156,7 +183,7 @@ require('lazy').setup({
                 capabilities = capabilities
             }
             for _, val in ipairs(servers) do
-                local lsp, opts = val[1], update(defaults, val[2])
+                local lsp, opts = val[1], vim.tbl_extend('force', defaults, val[2])
                 cfg[lsp].setup(opts)
             end
         end
@@ -469,6 +496,7 @@ opt('o', 'showmatch', true)
 opt('o', 'showmode', false)
 opt('o', 'smartcase', true)
 opt('o', 'smarttab', true)
+opt('o', 'splitright', true)
 opt('o', 'termguicolors', true)
 opt('o', 'undolevels', 8000)
 opt('o', 'undoreload', 30000)
