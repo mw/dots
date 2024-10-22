@@ -139,7 +139,7 @@ require('lazy').setup({
 
                 } },
                 { 'rust_analyzer', {} },
-                { 'tsserver', {} }
+                { 'ts_ls', {} }
             }
 
             local function on_attach(client, bufnr)
@@ -247,6 +247,7 @@ require('lazy').setup({
             local mappings = {
                 { ',f', ':Files' },
                 { ',b', ':Buffers' },
+                { ',j', ':Jumps' },
                 { ',g', ':Rg' },
                 { '<Leader>g', ':Rg <C-R>=expand("<cword>")<cr>' },
                 { ',t', ':Tags' }
@@ -464,7 +465,7 @@ require('lazy').setup({
                 sections = {
                     lualine_a = { { 'mode', upper = true } },
                     lualine_b = { { 'branch', icon = '' } },
-                    lualine_c = { { 'filename', file_status = true } },
+                    lualine_c = { { 'filename', path = 1, file_status = true } },
                     lualine_x = {},
                     lualine_y = { 'filetype' },
                     lualine_z = { 'location' },
@@ -535,13 +536,22 @@ map('n', ',w', ':set invwrap wrap?<cr>')
 map('n', '<c-z>', ':terminal<cr>i')
 map('n', '<c-n>', ':bn<cr>')
 map('n', '<c-p>', ':bp<cr>')
-map('n', 'Q', ':bd!<cr>')
+
 map('n', ',v', ':e ~/.config/nvim/init.lua<cr>')
 map('n', ',s', ':luafile ~/.config/nvim/init.lua<cr>')
 
 map('n', ',q', ':cwindow<cr>')
 map('n', ',n', ':cnext<cr>')
 map('n', ',p', ':cprev<cr>')
+
+vim.keymap.set('n', 'Q', function()
+    for _, win in pairs(vim.fn.getwininfo()) do
+        if win.quickfix == 1 then
+            vim.cmd('cclose')
+        end
+    end
+    vim.cmd('bd!')
+end, { noremap = true, silent = true })
 
 -- autocommands
 vim.cmd('autocmd TermEnter * setlocal nonumber')

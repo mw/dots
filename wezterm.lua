@@ -145,6 +145,19 @@ config.keys = {
         mods = 'OPT',
         action = wezterm.action.DisableDefaultAssignment
     },
+    {
+        key = 'Enter',
+        mods = 'OPT',
+        action = wezterm.action_callback(function(window)
+            local prev = window:get_dimensions()
+            window:maximize()
+            local d = window:get_dimensions()
+            if (prev.pixel_width == d.pixel_width) and
+                (prev.pixel_height == d.pixel_height) then
+                window:restore()
+            end
+        end),
+    }
 }
 config.window_background_opacity = 1
 config.window_close_confirmation = 'NeverPrompt'
