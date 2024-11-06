@@ -61,6 +61,8 @@ bindkey "\e[B" down-line-or-search
 
 local WORDCHARS=${WORDCHARS//\//}
 
+alias clip="base64 | tr -d '\n' | awk '{printf \"\033Ptmux;\033\033]52;c;%s\033\\\\\", \$0}'"
+
 logcheck=30
 stty start ""
 stty stop ""
