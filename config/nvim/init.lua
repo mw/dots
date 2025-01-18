@@ -107,13 +107,15 @@ require('lazy').setup({
                             'go.mod', '.git')
                     }
                 },
-                { 'ruff_lsp', {} },
+                { 'ruff_lsp', {
+                        cmd = { "uvx", "ruff-lsp" }
+                    }
+                },
                 {
                     'pylsp', {
+                        cmd = { "uvx", "--from", "python-lsp-server", "pylsp" },
                         settings = {
-                            formatComand = {
-                                "black"
-                            }
+                            formatComand = { "uvx", "black" }
                         }
                     }
                 },
