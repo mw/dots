@@ -159,6 +159,7 @@ config.keys = {
         end),
     }
 }
+config.selection_word_boundary = ' \t\n{}[]()\'".,;:│'
 config.window_background_opacity = 1
 config.window_close_confirmation = 'NeverPrompt'
 config.window_decorations = 'RESIZE'
