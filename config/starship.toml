@@ -1,4 +1,4 @@
-command_timeout = 1500
+command_timeout = 50
 format = """
 $username\
 $hostname\
@@ -9,7 +9,6 @@ $git_commit\
 $git_state\
 $git_metrics\
 $git_status\
-$hg_branch\
 $cmake\
 $memory_usage\
 $env_var\

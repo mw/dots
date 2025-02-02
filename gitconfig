@@ -5,7 +5,7 @@ email = git@mw.mozmail.com
 [alias]
 l = log --shortstat
 st = status
-ld = log --pretty=format:"%C(yellow)%h\\ %ad%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=relative
+ld = log --pretty=format:"%C(yellow)%h\\ \\ %Cgreen%ad%Cred%d\\ \\ %Creset%s%Cblue\\ \\ [%cn]" --decorate --date=relative
 lg = log --graph --pretty=oneline --abbrev-commit
 br = "!git for-each-ref refs/heads --color=always --sort -committerdate --format='%(HEAD)%(color:reset);%(color:yellow)%(refname:short);%(color:green)(%(committerdate:relative))' | column -t -s ';'"
 
@@ -16,7 +16,6 @@ ui = auto
 excludesfile = ~/.gitignore
 editor = nvim
 ignorecase = false
-pager = less -x4
 
 [diff]
 algorithm = histogram

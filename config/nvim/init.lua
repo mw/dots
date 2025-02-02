@@ -40,6 +40,39 @@ require('lazy').setup({
         end
     },
     {
+        "folke/noice.nvim",
+        event = "VeryLazy",
+        pin = true,
+        opts = {
+            lsp = {
+                override = {
+                    ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
+                    ["vim.lsp.util.stylize_markdown"] = true,
+                    ["cmp.entry.get_documentation"] = true,
+                },
+            },
+            presets = {
+                bottom_search = true,
+                command_palette = true,
+                long_message_to_split = true,
+                lsp_doc_border = true,
+            },
+            messages = {
+                view_search = false
+            },
+        },
+        dependencies = {
+            {
+                "MunifTanjim/nui.nvim",
+                pin = true,
+            },
+            {
+                "rcarriga/nvim-notify",
+                pin = true,
+            },
+        }
+    },
+    {
         "robitx/gp.nvim",
         pin = true,
         config = function()
@@ -75,7 +108,6 @@ require('lazy').setup({
             map("n", "<M-Space>d", ":GpChatDelete<cr>")
             map("n", "<M-Space>g", ":GpStop<cr>")
         end,
-
     },
     { 'github/copilot.vim' },
     {
@@ -107,15 +139,16 @@ require('lazy').setup({
                             'go.mod', '.git')
                     }
                 },
-                { 'ruff_lsp', {
-                        cmd = { "uvx", "ruff-lsp" }
-                    }
-                },
                 {
                     'pylsp', {
-                        cmd = { "uvx", "--from", "python-lsp-server", "pylsp" },
-                        settings = {
-                            formatComand = { "uvx", "black" }
+                        cmd = {
+                            "uvx",
+                            "--with", "python-lsp-black",
+                            "--with", "python-lsp-ruff",
+                            "--with", "pydantic",
+                            "--with", "pylsp-mypy",
+                            "--from", "python-lsp-server",
+                            "pylsp"
                         }
                     }
                 },
@@ -236,26 +269,19 @@ require('lazy').setup({
         end
     },
     {
-        'junegunn/fzf.vim',
-        pin = true,
+        'ibhagwan/fzf-lua',
         dependencies = {
-            {
-                'junegunn/fzf',
-                pin = true
-            }
-
+            'nvim-tree/nvim-web-devicons',
         },
         config = function()
             local mappings = {
-                { ',f', ':Files' },
-                { ',b', ':Buffers' },
-                { ',j', ':Jumps' },
-                { ',g', ':Rg' },
-                { '<Leader>g', ':Rg <C-R>=expand("<cword>")<cr>' },
-                { ',t', ':Tags' }
-            }
-            vim.g.fzf_vim = {
-                preview_window = { 'right:50%', 'alt-/' }
+                { ',f', ':FzfLua files' },
+                { ',b', ':FzfLua buffers' },
+                { ',j', ':FzfLua jumps' },
+                { ',g', ':FzfLua live_grep' },
+                { '<Leader>g', ':FzfLua grep_cword' },
+                { ',t', ':FzfLua treesitter' },
+                { ',<CR>', ':FzfLua commands'},
             }
             for _, v in ipairs(mappings) do
                 local seq, cmd = v[1], v[2]
@@ -279,7 +305,6 @@ require('lazy').setup({
                     "cpp",
                     "css",
                     "csv",
-                    "dhall",
                     "diff",
                     "dockerfile",
                     "git_config",
@@ -323,6 +348,7 @@ require('lazy').setup({
                 },
                 indent = {
                     enable = true,
+                    disable = {"toml", "gitcommit"}
                 },
                 textobjects = {
                     move = {
@@ -426,10 +452,6 @@ require('lazy').setup({
         end
     },
     {
-        'nvim-tree/nvim-web-devicons',
-        pin = true
-    },
-    {
         'nvim-tree/nvim-tree.lua',
         pin = true,
         dependencies = {
@@ -463,6 +485,9 @@ require('lazy').setup({
                     section_separators = { '', '' },
                     component_separators = { '', '' },
                     icons_enabled = true,
+                    refresh = {
+                        statusline = 2000,
+                    },
                 },
                 sections = {
                     lualine_a = { { 'mode', upper = true } },
@@ -482,13 +507,14 @@ require('lazy').setup({
 opt('o', 'backspace', 'indent,eol,nostop')
 opt('o', 'backup', true)
 opt('o', 'backupdir', '/tmp,.')
+opt('o', 'cmdheight', 0)
 opt('o', 'completeopt', 'menuone,noinsert,noselect')
 opt('o', 'foldenable', false)
 opt('o', 'hidden', true)
 opt('o', 'hlsearch', false)
 opt('o', 'ignorecase', true)
 opt('o', 'joinspaces', false)
-opt('o', 'laststatus', 2)
+opt('o', 'laststatus', 3)
 opt('o', 'mouse', 'a')
 opt('o', 'report', 0)
 opt('o', 'sessionoptions', 'buffers')
@@ -521,7 +547,7 @@ opt('b', 'undofile', true)
 -- window options
 opt('w', 'linebreak', true)
 opt('w', 'number', true)
-opt('w', 'signcolumn', 'yes:1')
+opt('w', 'signcolumn', 'number')
 opt('w', 'wrap', false)
 
 -- key mappings
