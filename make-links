@@ -1,13 +1,13 @@
 #!/bin/bash
 
 FILES="
+config/ghostty
 config/nix
 config/nvim
 config/starship.toml
 gitconfig
 gitignore
 tmux.conf
-wezterm.lua
 zshenv
 zshrc
 "

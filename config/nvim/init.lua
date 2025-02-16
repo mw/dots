@@ -182,7 +182,7 @@ require('lazy').setup({
                     { ',d', vim.lsp.buf.definition },
                     { ',D', vim.lsp.buf.type_definition },
                     { 'K', vim.lsp.buf.hover },
-                    { '<c-k>', vim.lsp.buf.signature_help },
+                    { ',K', vim.lsp.buf.signature_help },
                     { 'gi', vim.lsp.buf.implementation },
                     { '<leader>e', vim.diagnostic.open_float },
                     { '<leader>f', vim.lsp.buf.rename },
@@ -221,6 +221,23 @@ require('lazy').setup({
                 local lsp, opts = val[1], vim.tbl_extend('force', defaults, val[2])
                 cfg[lsp].setup(opts)
             end
+
+            vim.fn.sign_define('DiagnosticSignError', {
+                text = '',
+                texthl = 'DiagnosticSignError'
+            })
+            vim.fn.sign_define('DiagnosticSignWarn', {
+                text = '',
+                texthl = 'DiagnosticSignWarn'
+            })
+            vim.fn.sign_define('DiagnosticSignInfo', {
+                text = '',
+                texthl = 'DiagnosticSignInfo'
+            })
+            vim.fn.sign_define('DiagnosticSignHint', {
+                text = '',
+                texthl = 'DiagnosticSignHint'
+            })
         end
     },
     {
@@ -339,12 +356,12 @@ require('lazy').setup({
                     enable = true,
                 },
                 incremental_selection = {
-                  enable = true,
-                  keymaps = {
-                    init_selection = '<m-o>',
-                    node_incremental = '<m-o>',
-                    node_decremental = '<m-i>',
-                  }
+                    enable = true,
+                    keymaps = {
+                        init_selection = '<m-o>',
+                        node_incremental = '<m-o>',
+                        node_decremental = '<m-i>',
+                    }
                 },
                 indent = {
                     enable = true,
@@ -463,7 +480,7 @@ require('lazy').setup({
         end
     },
     {
-      'rmagatti/auto-session',
+        'rmagatti/auto-session',
         pin = true,
         config = function()
             require("auto-session").setup({
@@ -481,21 +498,26 @@ require('lazy').setup({
         config = function()
             require('lualine').setup({
                 options = {
-                    theme = 'tokyonight',
-                    section_separators = { '', '' },
-                    component_separators = { '', '' },
+                    theme = 'auto',
+                    section_separators = '',
+                    component_separators = '',
                     icons_enabled = true,
                     refresh = {
                         statusline = 2000,
                     },
                 },
                 sections = {
-                    lualine_a = { { 'mode', upper = true } },
-                    lualine_b = { { 'branch', icon = '' } },
-                    lualine_c = { { 'filename', path = 1, file_status = true } },
-                    lualine_x = {},
-                    lualine_y = { 'filetype' },
-                    lualine_z = { 'location' },
+                    lualine_a = {{ 'mode', fmt = function() return '' end }},
+                    lualine_b = {},
+                    lualine_c = {
+                        {
+                            'filename', path = 1, file_status = true,
+                            symbols = { modified = '•', readonly = '' }
+                        }
+                    },
+                    lualine_x = {{ 'filetype', icon_only = true }, 'diagnostics'},
+                    lualine_y = {},
+                    lualine_z = {},
                 },
                 inactive_sections = {}
             })

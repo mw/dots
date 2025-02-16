@@ -1,0 +1,30 @@
+window-decoration = false
+
+theme = catppuccin-macchiato
+cursor-style = block
+cursor-color = #D47EFF
+font-size = 11.5
+font-thicken = true
+font-family = Monaspace Neon
+font-variation = wght=300
+
+keybind = alt+enter=toggle_fullscreen
+keybind = ctrl+alt+n=new_window
+keybind = ctrl+shift+n=text:\x01n
+keybind = ctrl+shift+p=text:\x01p
+keybind = ctrl+shift+j=text:\x01(
+keybind = ctrl+shift+k=text:\x01)
+keybind = alt+h=text:\x01h
+keybind = alt+j=text:\x01j
+keybind = alt+k=text:\x01k
+keybind = alt+l=text:\x01l
+keybind = alt+shift+\=text:\x01|
+keybind = alt+-=text:\x01-
+keybind = alt+up=text:\x01K
+keybind = alt+down=text:\x01J
+keybind = alt+left=text:\x01H
+keybind = alt+right=text:\x01L
+
+macos-titlebar-style = hidden
+macos-window-shadow = false
+macos-non-native-fullscreen = visible-menu
