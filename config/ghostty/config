@@ -20,6 +20,9 @@ keybind = alt+k=text:\x01k
 keybind = alt+l=text:\x01l
 keybind = alt+shift+\=text:\x01|
 keybind = alt+-=text:\x01-
+keybind = alt+\=text:\x01z
+keybind = alt+shift+l=reload_config
+keybind = alt+shift+q=quit
 keybind = alt+up=text:\x01K
 keybind = alt+down=text:\x01J
 keybind = alt+left=text:\x01H
