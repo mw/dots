@@ -409,8 +409,8 @@ require("lazy").setup({
             words = { enabled = true }
         },
         keys = {
-            { ",f", function() Snacks.picker.smart() end, desc = "Smart Find Files" },
-            { ",b", function() Snacks.picker.buffers() end, desc = "Buffers" },
+            { ",f", function() Snacks.picker.files() end, desc = "Find Files" },
+            { ",b", function() Snacks.picker.buffers({ current = false }) end, desc = "Buffers" },
             { ",j", function() Snacks.picker.jumps() end, desc = "Jumps" },
             { ",g", function() Snacks.picker.grep() end, desc = "Grep" },
             { ",t", function() Snacks.picker.lsp_workspace_symbols() end, desc = "LSP Workspace Symbols" },
