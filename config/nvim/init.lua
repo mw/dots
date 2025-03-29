@@ -85,11 +85,25 @@ require("lazy").setup({
                         return require("codecompanion.adapters").extend("copilot", {
                             schema = {
                                 model = {
-                                    default = "claude-3.5-sonnet"
+                                    default = "claude-3.7-sonnet"
                                 },
                             },
                         })
                     end,
+                },
+                strategies = {
+                    chat = {
+                        slash_commands = {
+                            ["file"] =  {
+                                callback = "strategies.chat.slash_commands.file",
+                                description = "Select a file",
+                                opts = {
+                                    provider = "snacks",
+                                    contains_code = true,
+                                },
+                            },
+                        },
+                    },
                 },
             })
             map("n", "<m-space>", "<cmd>CodeCompanionChat Toggle<cr>",
@@ -194,6 +208,7 @@ require("lazy").setup({
                     { ",r", vim.lsp.buf.references },
                     { ",N", vim.diagnostic.goto_next },
                     { ",P", vim.diagnostic.goto_prev },
+                    { ",R", '<cmd>LspRestart<cr>' },
                 }
                 for _, v in ipairs(mappings) do
                     local seq, cmd = v[1], v[2]
@@ -655,8 +670,6 @@ map("n", ",,", function()
         tmux_send()
     end
 end)
-
-vim.keymap.set("n", "<tab>", "<cmd>wincmd w<cr>", { desc = "next window" })
 
 vim.keymap.set("n", "<leader>A", function()
     local current_file = vim.fn.expand("%:p")

@@ -1,0 +1,25 @@
+model: sonnet
+read: ["~/.conventions.md", "CONVENTIONS.md"]
+
+analytics-disable: true
+architect: true
+auto-commits: false
+auto-lint: false
+gitignore: false
+watch-files: true
+
+# Colors
+assistant-output-color: "#7aa2f7"
+code-theme: material
+completion-menu-bg-color: "#1d202f"
+completion-menu-color: "#c0caf5"
+completion-menu-current-bg-color: "#414868"
+completion-menu-current-color: "#c0caf5"
+tool-error-color: "#f7768e"
+tool-output-color: "#a9b1d6"
+tool-warning-color: "#e0af68"
+user-input-color: "#c7a9ff"
+
+# Strip trailing space from LLM code
+lint-cmd:
+  - "sh -c 'sed -i '' -e ''s/[[:space:]]*$//'' $1'"

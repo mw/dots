@@ -5,6 +5,7 @@ config/ghostty
 config/nix
 config/nvim
 config/starship.toml
+aider.conf.yml
 gitconfig
 gitignore
 tmux.conf

@@ -18,6 +18,7 @@ keybind = alt+h=text:\x01h
 keybind = alt+j=text:\x01j
 keybind = alt+k=text:\x01k
 keybind = alt+l=text:\x01l
+keybind = alt+s=text:\x01s
 keybind = alt+shift+\=text:\x01|
 keybind = alt+-=text:\x01-
 keybind = alt+\=text:\x01z
@@ -28,6 +29,5 @@ keybind = alt+down=text:\x01J
 keybind = alt+left=text:\x01H
 keybind = alt+right=text:\x01L
 
-macos-titlebar-style = hidden
-macos-window-shadow = false
 macos-non-native-fullscreen = visible-menu
+macos-titlebar-style = hidden
