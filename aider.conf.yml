@@ -19,7 +19,3 @@ tool-error-color: "#f7768e"
 tool-output-color: "#a9b1d6"
 tool-warning-color: "#e0af68"
 user-input-color: "#c7a9ff"
-
-# Strip trailing space from LLM code
-lint-cmd:
-  - "sh -c 'sed -i '' -e ''s/[[:space:]]*$//'' $1'"
