@@ -66,54 +66,6 @@ require("lazy").setup({
             },
         },
     },
-    {
-        "olimorris/codecompanion.nvim",
-        dependencies = {
-            {
-                "nvim-lua/plenary.nvim",
-                pin = true,
-            },
-            {
-                "nvim-treesitter/nvim-treesitter",
-                pin = true,
-            }
-        },
-        config = function()
-            require("codecompanion").setup({
-                adapters = {
-                    copilot = function()
-                        return require("codecompanion.adapters").extend("copilot", {
-                            schema = {
-                                model = {
-                                    default = "claude-3.7-sonnet"
-                                },
-                            },
-                        })
-                    end,
-                },
-                strategies = {
-                    chat = {
-                        slash_commands = {
-                            ["file"] =  {
-                                callback = "strategies.chat.slash_commands.file",
-                                description = "Select a file",
-                                opts = {
-                                    provider = "snacks",
-                                    contains_code = true,
-                                },
-                            },
-                        },
-                    },
-                },
-            })
-            map("n", "<m-space>", "<cmd>CodeCompanionChat Toggle<cr>",
-                { desc = "Code Companion Chat" }
-            )
-            map("v", "<m-space>", "<cmd>'<,'>CodeCompanion<cr>",
-                { desc = "Code Companion" }
-            )
-        end,
-    },
     { "github/copilot.vim" },
     {
         "folke/which-key.nvim",
@@ -239,22 +191,19 @@ require("lazy").setup({
                 local lsp, opts = val[1], vim.tbl_extend("force", defaults, val[2])
                 cfg[lsp].setup(opts)
             end
-
-            vim.fn.sign_define("DiagnosticSignError", {
-                text = "",
-                texthl = "DiagnosticSignError",
-            })
-            vim.fn.sign_define("DiagnosticSignWarn", {
-                text = "",
-                texthl = "DiagnosticSignWarn",
-            })
-            vim.fn.sign_define("DiagnosticSignInfo", {
-                text = "",
-                texthl = "DiagnosticSignInfo",
-            })
-            vim.fn.sign_define("DiagnosticSignHint", {
-                text = "",
-                texthl = "DiagnosticSignHint",
+            vim.diagnostic.config({
+                virtual_text = {
+                    prefix = "●",
+                },
+                severity_sort = true,
+                signs = {
+                    text = {
+                        [vim.diagnostic.severity.ERROR] = "",
+                        [vim.diagnostic.severity.WARN] = "",
+                        [vim.diagnostic.severity.INFO] = "",
+                        [vim.diagnostic.severity.HINT] = "",
+                    },
+                },
             })
         end,
     },
@@ -486,10 +435,7 @@ require("lazy").setup({
                 nerd_font_variant = "mono",
             },
             sources = {
-                default = { "lsp", "path", "snippets" },
-                per_filetype = {
-                    codecompanion = { "codecompanion" },
-                }
+                default = { "lsp", "path", "snippets" }
             },
             fuzzy = {
                 implementation = "prefer_rust_with_warning"
@@ -544,7 +490,20 @@ require("lazy").setup({
                             symbols = { modified = "•", readonly = "" },
                         },
                     },
-                    lualine_x = { { "filetype", icon_only = true }, "diagnostics" },
+                    lualine_x = {
+                        {
+                            function()
+                                local col = vim.fn.col(".")
+                                if col > 80 then
+                                    return tostring("󰦪")
+                                end
+                                return ""
+                            end,
+                            color = { fg = "#f7768e" },
+                        },
+                        { "filetype", icon_only = true },
+                        "diagnostics",
+                    },
                     lualine_y = { { "branch", icon = "" } },
                     lualine_z = {},
                 },

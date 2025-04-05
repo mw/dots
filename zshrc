@@ -20,33 +20,11 @@ setopt autopushd pushdminus pushdsilent pushdtohome
 
 zstyle ':completion::complete:*' use-cache on
 zstyle ':completion::complete:*' cache-path ~/.zsh/cache/$HOST
-zstyle ':completion:*' list-colors no=00 fi=00 di=01\;34 pi=33 so=01\;35 bd=00\;35 cd=00\;34 or=00\;41 mi=00\;45 ex=01\;32
-zstyle ':completion:*' list-prompt '%SAt %p: Hit TAB for more, or the character to insert%s'
-zstyle ':completion:*:cd:*' ignore-parents parent pwd
-zstyle ':completion:*:*:kill:*' menu yes select
-zstyle ':completion:*:processes' command 'ps -au$USER'
-zstyle ':completion:*:killall:*' menu yes select
-zstyle ':completion:*:killall:*' command 'ps --forest -u $USER -o cmd'
-zstyle ':completion:*:descriptions' format '%U%d%u'
-zstyle ':completion:*:warnings' format '%Bno matches for: %d%b'
-zstyle ':completion:*' completer _complete _match _approximate
-zstyle ':completion:*:match:*' original only
-zstyle ':completion:*:approximate:*' max-errors 1 numeric
-zstyle ':completion:*:functions' ignored-patterns '_*'
-zstyle ':completion:*:*:xdvi:*' menu yes select
-zstyle ':completion:*:*:xdvi:*' file-sort time
-zstyle ':completion:*:rm:*' ignore-line yes
-zstyle ':completion:*:*:(^rm):*:*files' ignored-patterns '*?.o' '*?.c~' '*?.old' '*?.pro'
-zstyle ':completion:*:functions' ignored-patterns '_*'
-zstyle ':completion:*:options' description 'yes'
-zstyle ':completion:*:options' auto-description '%d'
-
 zstyle :compinstall filename "$HOME/.zshrc"
 
 export EDITOR=nvim
 export DIRSTACKSIZE=8
 export CLICOLOR=1
-export LSCOLORS=dxfxcxdxbxegedabagacad
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export BAT_STYLE=plain
@@ -63,7 +41,6 @@ local WORDCHARS=${WORDCHARS//\//}
 
 alias clip="base64 | tr -d '\n' | awk '{printf \"\033Ptmux;\033\033]52;c;%s\033\\\\\", \$0}'"
 
-logcheck=30
 stty start ""
 stty stop ""
 

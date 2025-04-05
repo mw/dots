@@ -6,7 +6,7 @@ architect: true
 auto-commits: false
 auto-lint: false
 gitignore: false
-watch-files: true
+watch-files: false
 
 # Colors
 assistant-output-color: "#7aa2f7"
