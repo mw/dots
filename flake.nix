@@ -10,17 +10,12 @@
       (system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
-          isDarwin = builtins.match ".*linux" system == null;
+          isDarwin = pkgs.stdenv.isDarwin;
           localePkgs =
             if isDarwin then
               [ pkgs.darwin.locale ]
             else
               [ pkgs.glibcLocales pkgs.locale ];
-          pypkgs = pkgs.python3.withPackages (pp: with pp; [
-            httpx
-            pandas
-            pip
-          ]);
         in
         {
           basepkgs = pkgs.buildEnv {
@@ -29,8 +24,8 @@
               b3sum
               bash
               bat
+              bottom
               coreutils-prefixed
-              ctags
               diffutils
               direnv
               fd
@@ -40,20 +35,12 @@
               git-lfs
               gnutar
               go
-              golangci-lint
-              gopls
-              gotools
-              htop
               jq
               lsd
-              luajitPackages.lua-lsp
-              mold
-              mosh
               ncurses5
               neovim
+              nix-direnv
               nmap
-              nodePackages.vscode-langservers-extracted
-              pypkgs
               rclone
               restic
               ripgrep
@@ -62,12 +49,13 @@
               starship
               tailscale
               tmux
-              tree
               tree-sitter
               unzip
               uv
               zoxide
               zsh
+              zsh-autosuggestions
+              zsh-syntax-highlighting
               zstd
             ] ++ localePkgs;
             extraOutputsToInstall = [ "man" "doc" ];

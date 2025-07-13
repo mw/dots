@@ -2,6 +2,9 @@ autoload -Uz zmv
 autoload -Uz vcs_info
 autoload -Uz compinit && compinit
 autoload -Uz colors && colors
+autoload -Uz edit-command-line
+
+zle -N edit-command-line
 
 set -o emacs
 
@@ -29,6 +32,8 @@ export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export BAT_STYLE=plain
 export FZF_DEFAULT_COMMAND='rg --files'
+
+bindkey "^x^e" edit-command-line
 
 HISTSIZE=1000000
 SAVEHIST=1000000
@@ -78,6 +83,12 @@ if command -v starship &> /dev/null; then
 fi
 if command -v direnv &> /dev/null; then
     eval "$(direnv hook zsh)"
+fi
+if [[ -f ~/.nix-profile/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
+    source ~/.nix-profile/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+fi
+if [[ -f ~/.nix-profile/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
+    source ~/.nix-profile/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 fi
 if command -v fzf-share &> /dev/null; then
     fzf_keys=$(fzf-share)/key-bindings.zsh

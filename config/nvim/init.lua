@@ -91,13 +91,70 @@ require("lazy").setup({
                         },
                     },
                 },
-                { "cssls", {} },
-                { "html", {} },
-                { "jsonls", {} },
-                { "rnix", {} },
+                {
+                    "cssls",
+                    {
+                        cmd = {
+                            "nix",
+                            "shell",
+                            "nixpkgs#vscode-langservers-extracted",
+                            "-c",
+                            "vscode-css-language-server",
+                            "--stdio",
+                        },
+                    },
+                },
+                {
+                    "html",
+                    {
+                        cmd = {
+                            "nix",
+                            "shell",
+                            "nixpkgs#vscode-langservers-extracted",
+                            "-c",
+                            "vscode-html-language-server",
+                            "--stdio",
+                        },
+                    },
+                },
+                {
+                    "jsonls",
+                    {
+                        cmd = {
+                            "nix",
+                            "shell",
+                            "nixpkgs#vscode-langservers-extracted",
+                            "-c",
+                            "vscode-json-language-server",
+                            "--stdio",
+                        },
+                    },
+                },
+                {
+                    "nixd",
+                    {
+                        cmd = {
+                            "nix",
+                            "run",
+                            "nixpkgs#nixd",
+                        },
+                        formatting = {
+                            command = {
+                                "nix",
+                                "run",
+                                "nixpkgs#nixfmt",
+                            },
+                        },
+                    }
+                },
                 {
                     "gopls",
                     {
+                        cmd = {
+                            "nix",
+                            "run",
+                            "nixpkgs#gopls",
+                        },
                         root_dir = cfg.util.root_pattern("Gopkg.toml", "go.mod", ".git"),
                     },
                 },
@@ -123,7 +180,11 @@ require("lazy").setup({
                 {
                     "lua_ls",
                     {
-                        cmd = { "lua-lsp" },
+                        cmd = {
+                            "nix",
+                            "run",
+                            "nixpkgs#luajitPackages.lua-lsp",
+                        },
                         settings = {
                             Lua = {
                                 runtime = {
@@ -143,8 +204,28 @@ require("lazy").setup({
                         },
                     },
                 },
-                { "rust_analyzer", {} },
-                { "ts_ls", {} },
+                {
+                    "rust_analyzer",
+                    {
+                        cmd = {
+                            "nix",
+                            "run",
+                            "nixpkgs#rust-analyzer",
+                        },
+                    },
+                },
+                {
+                    "ts_ls",
+                    {
+                        cmd = {
+                            "nix",
+                            "run",
+                            "nixpkgs#nodePackages.typescript-language-server",
+                            "--",
+                            "--stdio",
+                        },
+                    },
+                },
             }
 
             local function on_attach(client, bufnr)
