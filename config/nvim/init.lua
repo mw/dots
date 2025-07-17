@@ -85,6 +85,10 @@ require("lazy").setup({
                     "clangd",
                     {
                         cmd = {
+                            "nix",
+                            "shell",
+                            "nixpkgs#clang-tools",
+                            "-c",
                             "clangd",
                             "--background-index",
                             "--log=verbose",
