@@ -35,36 +35,9 @@ require("lazy").setup({
         end,
     },
     {
-        "folke/noice.nvim",
-        event = "VeryLazy",
+        "OXY2DEV/markview.nvim",
         pin = true,
-        opts = {
-            lsp = {
-                override = {
-                    ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
-                    ["vim.lsp.util.stylize_markdown"] = true,
-                },
-            },
-            presets = {
-                bottom_search = true,
-                command_palette = true,
-                long_message_to_split = true,
-                lsp_doc_border = true,
-            },
-            messages = {
-                view_search = false,
-            },
-        },
-        dependencies = {
-            {
-                "MunifTanjim/nui.nvim",
-                pin = true,
-            },
-            {
-                "rcarriga/nvim-notify",
-                pin = true,
-            },
-        },
+        lazy = false,
     },
     { "github/copilot.vim" },
     {
@@ -163,21 +136,12 @@ require("lazy").setup({
                     },
                 },
                 {
-                    "pylsp",
+                    "pyrefly",
                     {
                         cmd = {
                             "uvx",
-                            "--with",
-                            "python-lsp-black",
-                            "--with",
-                            "python-lsp-ruff",
-                            "--with",
-                            "pydantic",
-                            "--with",
-                            "pylsp-mypy",
-                            "--from",
-                            "python-lsp-server",
-                            "pylsp",
+                            "pyrefly",
+                            "lsp",
                         },
                     },
                 },
@@ -274,7 +238,8 @@ require("lazy").setup({
             }
             for _, val in ipairs(servers) do
                 local lsp, opts = val[1], vim.tbl_extend("force", defaults, val[2])
-                cfg[lsp].setup(opts)
+                vim.lsp.config[lsp] = opts
+                vim.lsp.enable(lsp)
             end
             vim.diagnostic.config({
                 virtual_text = {
@@ -715,26 +680,6 @@ map("n", ",,", function()
     end
 end)
 
-vim.keymap.set("n", "<leader>A", function()
-    local current_file = vim.fn.expand("%:p")
-    if aider_send("/add " .. current_file) then
-        vim.notify("Added " .. vim.fn.expand("%:t"), vim.log.levels.INFO)
-    end
-end, { desc = "aider: add buffer" })
-
-vim.keymap.set("n", "<leader>D", function()
-    local current_file = vim.fn.expand("%:p")
-    if aider_send("/drop " .. current_file) then
-        vim.notify("Dropped " .. vim.fn.expand("%:t"), vim.log.levels.INFO)
-    end
-end, { desc = "aider: drop buffer" })
-
-vim.keymap.set("n", "<leader>R", function()
-    if aider_send("/reset") then
-        vim.notify("Reset", vim.log.levels.INFO)
-    end
-end, { desc = "aider: reset" })
-
 function get_tmux_pane(pattern)
     local result = vim.fn.system('tmux list-panes -F "#{pane_id} #{pane_tty}"')
     local lines = vim.split(vim.trim(result), "\n")
@@ -757,16 +702,6 @@ function get_tmux_pane(pattern)
         end
     end
     return nil
-end
-
-function aider_send(cmd)
-    local pane_id = get_tmux_pane("aider")
-    if not pane_id then
-        vim.notify("aider pane not found", vim.log.levels.ERROR)
-        return false
-    end
-    vim.fn.system({ "tmux", "send-keys", "-t", pane_id, cmd, "Enter" })
-    return true
 end
 
 function tmux_send()
