@@ -3,13 +3,31 @@
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixpkgs-unstable";
+    neovim-src = {
+      url = "github:neovim/neovim?ref=master";
+      flake = false;
+    };
   };
 
-  outputs = { self, nixpkgs }: {
+  outputs = { self, nixpkgs, neovim-src }:
+  let
+    neovimOverlay = final: prev: {
+      neovim-unwrapped = prev.neovim-unwrapped.overrideAttrs (old: {
+        src = neovim-src;
+
+        # post-build version check fails
+        doInstallCheck = false;
+      });
+    };
+  in {
     packages = nixpkgs.lib.genAttrs nixpkgs.lib.platforms.all
       (system:
         let
-          pkgs = nixpkgs.legacyPackages.${system};
+          pkgs = import nixpkgs {
+            inherit system;
+            overlays = [ neovimOverlay ];
+          };
+
           isDarwin = pkgs.stdenv.isDarwin;
           localePkgs =
             if isDarwin then

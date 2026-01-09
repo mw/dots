@@ -7,26 +7,10 @@ function map(mode, lhs, rhs, opts)
 end
 
 -- plugin configuration
-
-local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.loop.fs_stat(lazypath) then
-    vim.fn.system({
-        "git",
-        "clone",
-        "--filter=blob:none",
-        "https://github.com/folke/lazy.nvim.git",
-        "--branch=stable",
-        lazypath,
-    })
-end
-vim.opt.rtp:prepend(lazypath)
-
-require("lazy").setup({
+local plugins = {
     {
-        "folke/tokyonight.nvim",
-        pin = true,
-        priority = 1000,
-        config = function()
+        "https://github.com/folke/tokyonight.nvim",
+        function()
             require("tokyonight").setup({
                 style = "storm",
                 lualine_bold = false,
@@ -34,24 +18,68 @@ require("lazy").setup({
             vim.cmd("colorscheme tokyonight")
         end,
     },
+    { "https://github.com/OXY2DEV/markview.nvim" },
+    { "https://github.com/github/copilot.vim" },
     {
-        "OXY2DEV/markview.nvim",
-        pin = true,
-        lazy = false,
+        "https://github.com/folke/which-key.nvim",
+        function()
+            require("which-key").setup({})
+        end,
     },
-    { "github/copilot.vim" },
+    { "https://github.com/rafamadriz/friendly-snippets" },
     {
-        "folke/which-key.nvim",
-        pin = true,
-        opts = {},
+        "https://github.com/saghen/blink.cmp",
+        function(plugin)
+            if not plugin or not plugin.path then
+                return
+            end
+            local built =
+                vim.fn.glob(plugin.path .. "/target/release/*blink*cmp*fuzzy*")
+            if built ~= "" then
+                return
+            end
+            vim.notify("Building blink.cmp...", vim.log.levels.INFO)
+            local cmd = { "nix", "run", ".#build-plugin" }
+            local result = vim.system(cmd, { cwd = plugin.path }):wait()
+            if result.code ~= 0 then
+                vim.notify("blink.cmp build failed", vim.log.levels.WARN)
+            end
+            require("blink.cmp").setup({
+                keymap = {
+                    preset = "super-tab",
+                    ["<m-space>"] = { "show" },
+                },
+                completion = {
+                    menu = {
+                        auto_show = false,
+                        border = "rounded",
+                        winhighlight = "Normal:BlinkCmpDoc,"
+                            .. "FloatBorder:BlinkCmpDocBorder,"
+                            .. "CursorLine:BlinkCmpDocCursorLine,"
+                            .. "Search:None",
+                    },
+                    documentation = {
+                        auto_show = true,
+                        auto_show_delay_ms = 500,
+                        window = { border = "rounded" },
+                    },
+                },
+                appearance = {
+                    use_nvim_cmp_as_default = true,
+                    nerd_font_variant = "mono",
+                },
+                sources = {
+                    default = { "lsp", "path", "snippets" },
+                },
+                fuzzy = {
+                    implementation = "prefer_rust_with_warning",
+                },
+            })
+        end,
     },
     {
-        "neovim/nvim-lspconfig",
-        dependencies = {
-            "saghen/blink.cmp",
-            pin = true,
-        },
-        config = function()
+        "https://github.com/neovim/nvim-lspconfig",
+        function()
             local cfg = require("lspconfig")
             local servers = {
                 {
@@ -122,7 +150,7 @@ require("lazy").setup({
                                 "nixpkgs#nixfmt",
                             },
                         },
-                    }
+                    },
                 },
                 {
                     "gopls",
@@ -132,16 +160,30 @@ require("lazy").setup({
                             "run",
                             "nixpkgs#gopls",
                         },
-                        root_dir = cfg.util.root_pattern("Gopkg.toml", "go.mod", ".git"),
+                        root_dir = cfg.util.root_pattern(
+                            "Gopkg.toml",
+                            "go.mod",
+                            ".git"
+                        ),
                     },
                 },
                 {
-                    "pyrefly",
+                    "ruff",
                     {
                         cmd = {
                             "uvx",
-                            "pyrefly",
-                            "lsp",
+                            "ruff",
+                            "server",
+                        },
+                    },
+                },
+                {
+                    "ty",
+                    {
+                        cmd = {
+                            "uvx",
+                            "ty",
+                            "server",
                         },
                     },
                 },
@@ -153,6 +195,9 @@ require("lazy").setup({
                             "run",
                             "nixpkgs#luajitPackages.lua-lsp",
                         },
+                        format = {
+                            enable = true,
+                        },
                         settings = {
                             Lua = {
                                 runtime = {
@@ -162,13 +207,28 @@ require("lazy").setup({
                                     globals = { "vim" },
                                 },
                                 workspace = {
-                                    library = vim.api.nvim_get_runtime_file("", true),
+                                    library = vim.api.nvim_get_runtime_file(
+                                        "",
+                                        true
+                                    ),
                                     checkThirdParty = false,
                                 },
                                 telemetry = {
                                     enable = false,
                                 },
                             },
+                        },
+                    },
+                },
+                {
+                    "stylua",
+                    {
+                        cmd = {
+                            "nix",
+                            "run",
+                            "nixpkgs#stylua",
+                            "--",
+                            "--lsp",
                         },
                     },
                 },
@@ -194,6 +254,16 @@ require("lazy").setup({
                         },
                     },
                 },
+                {
+                    "tombi",
+                    {
+                        cmd = {
+                            "uvx",
+                            "tombi",
+                            "lsp",
+                        },
+                    },
+                },
             }
 
             local function on_attach(client, bufnr)
@@ -209,7 +279,7 @@ require("lazy").setup({
                     { ",r", vim.lsp.buf.references },
                     { ",N", vim.diagnostic.goto_next },
                     { ",P", vim.diagnostic.goto_prev },
-                    { ",R", '<cmd>LspRestart<cr>' },
+                    { ",R", "<cmd>LspRestart<cr>" },
                 }
                 for _, v in ipairs(mappings) do
                     local seq, cmd = v[1], v[2]
@@ -222,11 +292,11 @@ require("lazy").setup({
 
                 if client.server_capabilities.documentFormattingProvider then
                     vim.cmd([[
-                        augroup formatting
-                        au!
-                        autocmd BufWritePre <buffer> lua vim.lsp.buf.format({ async=false })
-                        augroup END
-                    ]])
+                    augroup formatting
+                    au!
+                    autocmd BufWritePre <buffer> lua vim.lsp.buf.format({ async=false })
+                    augroup END
+                ]])
                 end
                 vim.diagnostic.config({ underline = false })
             end
@@ -237,7 +307,8 @@ require("lazy").setup({
                 capabilities = capabilities,
             }
             for _, val in ipairs(servers) do
-                local lsp, opts = val[1], vim.tbl_extend("force", defaults, val[2])
+                local lsp, opts =
+                    val[1], vim.tbl_extend("force", defaults, val[2])
                 vim.lsp.config[lsp] = opts
                 vim.lsp.enable(lsp)
             end
@@ -257,32 +328,27 @@ require("lazy").setup({
             })
         end,
     },
+    { "https://github.com/machakann/vim-sandwich" },
     {
-        "machakann/vim-sandwich",
-        pin = true,
-    },
-    {
-        "lewis6991/gitsigns.nvim",
-        pin = true,
-        config = function()
-            require("gitsigns").setup()
+        "https://github.com/lewis6991/gitsigns.nvim",
+        function()
+            require("gitsigns").setup({
+                current_line_blame_opts = {
+                    virt_text_pos = "eol",
+                },
+            })
             map("n", "<leader>B", "<cmd>Gitsigns blame<cr>")
+            map("n", "<M-b>", "<cmd>Gitsigns toggle_current_line_blame<cr>")
         end,
     },
+    { "https://github.com/kshenoy/vim-signature" },
     {
-        "kshenoy/vim-signature",
-        pin = true,
-    },
-    {
-        'stevearc/quicker.nvim',
-        event = "FileType qf",
-        pin = true,
-        opts = {},
-        config = function()
+        "https://github.com/stevearc/quicker.nvim",
+        function()
             local quicker = require("quicker")
             map("n", ",q", function()
                 quicker.toggle()
-            end, { desc = "Toggle quickfix", })
+            end, { desc = "Toggle quickfix" })
             map("n", ",n", "<cmd>cnext<cr>")
             map("n", ",p", "<cmd>cprev<cr>")
             vim.keymap.set("n", ",l", function()
@@ -293,7 +359,11 @@ require("lazy").setup({
                     {
                         ">",
                         function()
-                            quicker.expand({ before = 2, after = 2, add_to_existing = true })
+                            quicker.expand({
+                                before = 2,
+                                after = 2,
+                                add_to_existing = true,
+                            })
                         end,
                         desc = "Expand quickfix context",
                     },
@@ -309,210 +379,266 @@ require("lazy").setup({
         end,
     },
     {
-        "nvim-treesitter/nvim-treesitter",
-        dependencies = {
-            {
-                "nvim-treesitter/nvim-treesitter-textobjects",
-                pin = true,
-            },
-        },
-        build = ":TSUpdate",
-        config = function()
-            require("nvim-treesitter.configs").setup({
-                auto_install = false,
-                ensure_installed = {
-                    "bash",
-                    "c",
-                    "cmake",
-                    "cpp",
-                    "css",
-                    "csv",
-                    "diff",
-                    "dockerfile",
-                    "git_config",
-                    "git_rebase",
-                    "gitcommit",
-                    "gitignore",
-                    "go",
-                    "gosum",
-                    "html",
-                    "javascript",
-                    "json",
-                    "jsonc",
-                    "lua",
-                    "make",
-                    "markdown",
-                    "nix",
-                    "printf",
-                    "python",
-                    "regex",
-                    "requirements",
-                    "rust",
-                    "sql",
-                    "terraform",
-                    "tmux",
-                    "toml",
-                    "tsx",
-                    "typescript",
-                },
-                highlight = {
-                    enable = true,
-                },
-                incremental_selection = {
-                    enable = true,
-                    keymaps = {
-                        init_selection = "<m-o>",
-                        node_incremental = "<m-o>",
-                        node_decremental = "<m-i>",
-                    },
-                },
-                indent = {
-                    enable = true,
-                    disable = { "toml", "gitcommit" },
-                },
-                textobjects = {
-                    move = {
-                        enable = true,
-                        set_jumps = true,
-                    },
-                    select = {
-                        enable = true,
-                        lookahead = true,
-                        keymaps = {
-                            ["af"] = "@function.outer",
-                            ["if"] = "@function.inner",
-                        },
-                    },
-                    swap = {
-                        enable = true,
-                        swap_next = {
-                            ["<m-s-j>"] = "@parameter.inner",
-                        },
-                        swap_previous = {
-                            ["<m-s-k>"] = "@parameter.inner",
-                        },
-                    },
-                },
+        "https://github.com/nvim-treesitter/nvim-treesitter",
+        function()
+            local ts = require("nvim-treesitter")
+            local languages = {
+                "bash",
+                "c",
+                "cmake",
+                "cpp",
+                "css",
+                "csv",
+                "diff",
+                "dockerfile",
+                "git_config",
+                "git_rebase",
+                "gitcommit",
+                "gitignore",
+                "go",
+                "gosum",
+                "html",
+                "javascript",
+                "json",
+                "lua",
+                "make",
+                "markdown",
+                "nix",
+                "printf",
+                "python",
+                "regex",
+                "requirements",
+                "rust",
+                "sql",
+                "terraform",
+                "tmux",
+                "toml",
+                "tsx",
+                "typescript",
+            }
+
+            ts.setup({
+                install_dir = vim.fs.joinpath(vim.fn.stdpath("data"), "site"),
+            })
+            ts.install(languages)
+
+            local group =
+                vim.api.nvim_create_augroup("TreesitterSetup", { clear = true })
+            vim.api.nvim_create_autocmd("FileType", {
+                group = group,
+                callback = function(args)
+                    local ok = pcall(vim.treesitter.start, args.buf)
+                    if ok then
+                        vim.bo[args.buf].indentexpr =
+                            "v:lua.require'nvim-treesitter'.indentexpr()"
+                    end
+                end,
             })
         end,
     },
     {
-        "folke/snacks.nvim",
-        priority = 1000,
-        lazy = false,
-        opts = {
-            bigfile = { enabled = true },
-            explorer = { enabled = true },
-            input = { enabled = true },
-            notifier = {
-                enabled = true,
-                timeout = 3000,
-            },
-            picker = {
-                enabled = true,
-                win = {
-                    input = {
-                        keys = {
-                            ["<m-a>"] = { "select_all", mode = { "n", "i" } },
-                            ["<m-/>"] = { "toggle_preview", mode = { "n", "i" } },
-                        }
-                    }
-                }
-            },
-            quickfile = { enabled = true },
-            words = { enabled = true }
-        },
-        keys = {
-            { ",f", function() Snacks.picker.files() end, desc = "Find Files" },
-            { ",b", function() Snacks.picker.buffers({ current = false }) end, desc = "Buffers" },
-            { ",j", function() Snacks.picker.jumps() end, desc = "Jumps" },
-            { ",g", function() Snacks.picker.grep() end, desc = "Grep" },
-            { ",t", function() Snacks.picker.lsp_workspace_symbols() end, desc = "LSP Workspace Symbols" },
-            { ",R", function() Snacks.picker.resume() end, desc = "Resume" },
-            { ",<cr>", function() Snacks.picker.commands() end, desc = "Commands" },
-            { "<leader>t", function() Snacks.explorer() end, desc = "File Explorer" },
-            { "<leader>:", function() Snacks.picker.command_history() end, desc = "Command History" },
-            { "<leader>g", function() Snacks.picker.grep_word() end, desc = "Visual selection or word", mode = { "n", "x" } },
-            { "<leader>si", function() Snacks.picker.icons() end, desc = "Icons" },
-            { "<leader>sm", function() Snacks.picker.marks() end, desc = "Marks" },
-            { "<leader>sM", function() Snacks.picker.man() end, desc = "Man Pages" },
-            { "<leader>sl", function() Snacks.picker.loclist() end, desc = "Location List" },
-            { "<leader>sq", function() Snacks.picker.qflist() end, desc = "Quickfix List" },
-            { "<leader>su", function() Snacks.picker.undo() end, desc = "Undo History" },
-            { "<leader>N", function() Snacks.picker.notifications() end, desc = "Notification History" },
-            { "<leader>sh", function() Snacks.picker.help() end, desc = "Help Pages" },
-            { "<leader>gb", function() Snacks.picker.git_branches() end, desc = "Git Branches" },
-            { "<leader>gl", function() Snacks.picker.git_log() end, desc = "Git Log" },
-            { "<leader>gL", function() Snacks.picker.git_log_line() end, desc = "Git Log Line" },
-            { "<leader>gs", function() Snacks.picker.git_status() end, desc = "Git Status" },
-            { "<leader>gS", function() Snacks.picker.git_stash() end, desc = "Git Stash" },
-            { "<leader>gd", function() Snacks.picker.git_diff() end, desc = "Git Diff (Hunks)" },
-            { "<leader>gf", function() Snacks.picker.git_log_file() end, desc = "Git Log File" },
-            { "Q", function() Snacks.bufdelete() end, desc = "Delete Buffer" },
-        }
+        "https://github.com/nvim-treesitter/nvim-treesitter-textobjects",
+        function()
+            local tt = require("nvim-treesitter-textobjects")
+            tt.setup({
+                select = {
+                    lookahead = true,
+                },
+                move = {
+                    set_jumps = true,
+                },
+            })
+
+            local select = require("nvim-treesitter-textobjects.select")
+            map({ "x", "o" }, "af", function()
+                select.select_textobject("@function.outer", "textobjects")
+            end, { desc = "Select function outer" })
+            map({ "x", "o" }, "if", function()
+                select.select_textobject("@function.inner", "textobjects")
+            end, { desc = "Select function inner" })
+
+            local move = require("nvim-treesitter-textobjects.move")
+            map({ "n", "x", "o" }, "]f", function()
+                move.goto_next_start("@function.outer", "textobjects")
+            end, { desc = "Next function start" })
+            map({ "n", "x", "o" }, "]c", function()
+                move.goto_next_start("@class.outer", "textobjects")
+            end, { desc = "Next class start" })
+            map({ "n", "x", "o" }, "]F", function()
+                move.goto_next_end("@function.outer", "textobjects")
+            end, { desc = "Next function end" })
+            map({ "n", "x", "o" }, "]C", function()
+                move.goto_next_end("@class.outer", "textobjects")
+            end, { desc = "Next class end" })
+            map({ "n", "x", "o" }, "[f", function()
+                move.goto_previous_start("@function.outer", "textobjects")
+            end, { desc = "Prev function start" })
+            map({ "n", "x", "o" }, "[c", function()
+                move.goto_previous_start("@class.outer", "textobjects")
+            end, { desc = "Prev class start" })
+            map({ "n", "x", "o" }, "[F", function()
+                move.goto_previous_end("@function.outer", "textobjects")
+            end, { desc = "Prev function end" })
+            map({ "n", "x", "o" }, "[C", function()
+                move.goto_previous_end("@class.outer", "textobjects")
+            end, { desc = "Prev class end" })
+
+            local swap = require("nvim-treesitter-textobjects.swap")
+            map("n", "<m-s-j>", function()
+                swap.swap_next("@parameter.inner")
+            end, { desc = "Swap next parameter" })
+            map("n", "<m-s-k>", function()
+                swap.swap_previous("@parameter.inner")
+            end, { desc = "Swap prev parameter" })
+        end,
+        { version = "main" },
     },
     {
-        "saghen/blink.cmp",
-        dependencies = {
-            "rafamadriz/friendly-snippets",
-            pin = true,
-        },
-        version = "*",
-        build = "nix run .#build-plugin",
-        pin = true,
-        opts = {
-            keymap = {
-                preset = "super-tab",
-                ["<m-space>"] = { "show" },
-            },
-            completion = {
-                menu = {
-                    auto_show = false,
-                    border = "rounded",
-                    winhighlight = "Normal:BlinkCmpDoc,"
-                        .. "FloatBorder:BlinkCmpDocBorder,"
-                        .. "CursorLine:BlinkCmpDocCursorLine,"
-                        .. "Search:None",
+        "https://github.com/folke/snacks.nvim",
+        function()
+            local snacks = require("snacks")
+            snacks.setup({
+                bigfile = { enabled = true },
+                explorer = { enabled = true },
+                indent = {
+                    enabled = false,
+                    indent = {
+                        only_scope = true,
+                        char = "┊",
+                    },
+                    scope = {
+                        enabled = true,
+                    },
                 },
-                documentation = {
-                    auto_show = true,
-                    auto_show_delay_ms = 500,
-                    window = { border = "rounded" },
+                input = { enabled = true },
+                notifier = {
+                    enabled = true,
+                    timeout = 3000,
                 },
-            },
-            appearance = {
-                use_nvim_cmp_as_default = true,
-                nerd_font_variant = "mono",
-            },
-            sources = {
-                default = { "lsp", "path", "snippets" }
-            },
-            fuzzy = {
-                implementation = "prefer_rust_with_warning"
-            },
-        },
-        opts_extend = { "sources.default" },
+                picker = {
+                    enabled = true,
+                    win = {
+                        input = {
+                            keys = {
+                                ["<m-a>"] = {
+                                    "select_all",
+                                    mode = { "n", "i" },
+                                },
+                                ["<m-/>"] = {
+                                    "toggle_preview",
+                                    mode = { "n", "i" },
+                                },
+                            },
+                        },
+                    },
+                },
+                quickfile = { enabled = true },
+                words = { enabled = true },
+            })
+            map({ "n", "i" }, "<m-i>", function()
+                if snacks.indent.enabled then
+                    snacks.indent.disable()
+                else
+                    snacks.indent.enable()
+                end
+            end, { desc = "Toggle indent guides" })
+            map("n", ",f", function()
+                snacks.picker.files()
+            end, { desc = "Find Files" })
+            map("n", ",b", function()
+                snacks.picker.buffers({ current = false })
+            end, { desc = "Buffers" })
+            map("n", ",j", function()
+                snacks.picker.jumps()
+            end, { desc = "Jumps" })
+            map("n", ",g", function()
+                snacks.picker.grep()
+            end, { desc = "Grep" })
+            map("n", ",t", function()
+                snacks.picker.lsp_workspace_symbols()
+            end, { desc = "LSP Workspace Symbols" })
+            map("n", ",R", function()
+                snacks.picker.resume()
+            end, { desc = "Resume" })
+            map("n", ",<cr>", function()
+                snacks.picker.commands()
+            end, { desc = "Commands" })
+            map("n", "<leader>t", function()
+                snacks.explorer()
+            end, { desc = "File Explorer" })
+            map("n", "<leader>:", function()
+                snacks.picker.command_history()
+            end, { desc = "Command History" })
+            vim.keymap.set({ "n", "x" }, "<leader>g", function()
+                snacks.picker.grep_word()
+            end, {
+                desc = "Visual selection or word",
+                noremap = true,
+                silent = true,
+            })
+            map("n", "<leader>si", function()
+                snacks.picker.icons()
+            end, { desc = "Icons" })
+            map("n", "<leader>sm", function()
+                snacks.picker.marks()
+            end, { desc = "Marks" })
+            map("n", "<leader>sM", function()
+                snacks.picker.man()
+            end, { desc = "Man Pages" })
+            map("n", "<leader>sl", function()
+                snacks.picker.loclist()
+            end, { desc = "Location List" })
+            map("n", "<leader>sq", function()
+                snacks.picker.qflist()
+            end, { desc = "Quickfix List" })
+            map("n", "<leader>su", function()
+                snacks.picker.undo()
+            end, { desc = "Undo History" })
+            map("n", "<leader>N", function()
+                snacks.picker.notifications()
+            end, { desc = "Notification History" })
+            map("n", "<leader>sh", function()
+                snacks.picker.help()
+            end, { desc = "Help Pages" })
+            map("n", "<leader>gb", function()
+                snacks.picker.git_branches()
+            end, { desc = "Git Branches" })
+            map("n", "<leader>gl", function()
+                snacks.picker.git_log()
+            end, { desc = "Git Log" })
+            map("n", "<leader>gL", function()
+                snacks.picker.git_log_line()
+            end, { desc = "Git Log Line" })
+            map("n", "<leader>gs", function()
+                snacks.picker.git_status()
+            end, { desc = "Git Status" })
+            map("n", "<leader>gS", function()
+                snacks.picker.git_stash()
+            end, { desc = "Git Stash" })
+            map("n", "<leader>gd", function()
+                snacks.picker.git_diff()
+            end, { desc = "Git Diff (Hunks)" })
+            map("n", "<leader>gf", function()
+                snacks.picker.git_log_file()
+            end, { desc = "Git Log File" })
+            map("n", "Q", function()
+                snacks.bufdelete()
+            end, { desc = "Delete Buffer" })
+        end,
     },
     {
-        "rmagatti/auto-session",
-        pin = true,
-        config = function()
+        "https://github.com/rmagatti/auto-session",
+        function()
             require("auto-session").setup({
                 log_level = "error",
                 auto_session_suppress_dirs = { "~/" },
             })
         end,
     },
+    { "https://github.com/nvim-tree/nvim-web-devicons" },
     {
-        "nvim-lualine/lualine.nvim",
-        pin = true,
-        dependencies = {
-            {
-                "nvim-tree/nvim-web-devicons",
-                pin = true,
-            },
-        },
-        config = function()
+        "https://github.com/nvim-lualine/lualine.nvim",
+        function()
             require("lualine").setup({
                 options = {
                     theme = "auto",
@@ -525,12 +651,14 @@ require("lazy").setup({
                     globalstatus = true,
                 },
                 sections = {
-                    lualine_a = { {
-                        "mode",
-                        fmt = function()
-                            return ""
-                        end,
-                    } },
+                    lualine_a = {
+                        {
+                            "mode",
+                            fmt = function()
+                                return ""
+                            end,
+                        },
+                    },
                     lualine_b = {},
                     lualine_c = {
                         {
@@ -561,9 +689,45 @@ require("lazy").setup({
             })
         end,
     },
-}, {})
+}
 
--- Set options
+-- plugin management
+local specs = {}
+local valid = {}
+for _, plugin in ipairs(plugins) do
+    local src = plugin[1]
+    local setup = plugin[2]
+    local opts = plugin[3] or {}
+    local name = src:match("([^/]+)$")
+    table.insert(specs, {
+        src = src,
+        name = name,
+        version = opts.version,
+        data = {
+            setup = setup,
+        },
+    })
+    valid[name] = true
+end
+
+for _, entry in ipairs(vim.pack.get()) do
+    local name = entry.spec.name
+    if name and not valid[name] and not entry.active then
+        vim.pack.del({ name })
+    end
+end
+
+vim.pack.add(specs, {
+    load = function(plugin)
+        local data = plugin.spec.data or {}
+        vim.cmd.packadd(plugin.spec.name)
+        if data.setup then
+            data.setup(plugin)
+        end
+    end,
+})
+
+-- set options
 local options = {
     -- global options
     backspace = "indent,eol,nostop",
@@ -573,7 +737,7 @@ local options = {
     completeopt = "menuone,noinsert,noselect",
     foldenable = false,
     hidden = true,
-    hlsearch = false,
+    hlsearch = true,
     ignorecase = true,
     joinspaces = false,
     laststatus = 3,
@@ -594,6 +758,7 @@ local options = {
     whichwrap = "h,l,<,>,[,]",
     wildignore = "*.o,*.bak,*.pyc,*.swp,.git,node_modules",
     wildmode = "list:longest",
+    winborder = "rounded",
     writebackup = true,
 
     -- buffer options
@@ -617,7 +782,7 @@ for k, v in pairs(options) do
 end
 
 -- key mappings
-map({"v", "n"}, "<space>", "zz")
+map({ "v", "n" }, "<space>", ":nohl<cr>zz")
 
 map("n", "<leader><leader>", "<cmd>set invpaste paste?<cr>")
 map("n", "<leader>n", "<cmd>set invnumber number?<cr>")
@@ -627,8 +792,8 @@ map("n", "<c-z>", "<cmd>terminal<cr>i")
 map("n", "<c-n>", "<cmd>bn<cr>")
 map("n", "<c-p>", "<cmd>bp<cr>")
 
-map("n", ",v", "<cmd>e ~/.config/nvim/init.lua<cr>")
-map("n", ",s", "<cmd>luafile ~/.config/nvim/init.lua<cr>")
+map("n", ",v", "<cmd>e ~/dots/config/nvim/init.lua<cr>")
+map("n", ",s", "<cmd>luafile ~/dots/config/nvim/init.lua<cr>")
 
 map("n", "<leader>ww", "<cmd>e ~/Private/wiki<cr>")
 
