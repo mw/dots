@@ -420,6 +420,8 @@ local plugins = {
                 "toml",
                 "tsx",
                 "typescript",
+                "vim",
+                "vimdoc",
             }
 
             ts.setup({
@@ -775,6 +777,7 @@ local options = {
     tabstop = 4,
     textwidth = 80,
     undofile = true,
+    grepprg = "rg --vimgrep -uu --no-messages",
 
     -- window options
     linebreak = true,
@@ -795,10 +798,8 @@ end)
 
 map("n", "<Tab>", "<c-w>w")
 
--- Map CSI u sequence for <c-i> (configured in tmux) to the default <c-i>
--- behavior in nvim. This is to avoid a conflict with the tab mapping above,
--- without turning on extkeys (which has some issues in tmux).
-vim.keymap.set("n", "\027[105;5u", function()
+-- Map the tmux-sent F13 sequence for <c-i> to the default <c-i> behavior
+vim.keymap.set("n", "<F13>", function()
     vim.api.nvim_feedkeys(
         vim.api.nvim_replace_termcodes("<c-i>", true, false, true),
         "n",
