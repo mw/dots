@@ -18,7 +18,12 @@ local plugins = {
             vim.cmd("colorscheme tokyonight")
         end,
     },
-    { "https://github.com/OXY2DEV/markview.nvim" },
+    {
+        "https://github.com/OXY2DEV/markview.nvim",
+        function()
+            map("n", "<m-m>", "<cmd>Markview toggle<cr>")
+        end,
+    },
     { "https://github.com/github/copilot.vim" },
     {
         "https://github.com/folke/which-key.nvim",
@@ -279,7 +284,7 @@ local plugins = {
                     { ",r", vim.lsp.buf.references },
                     { ",N", vim.diagnostic.goto_next },
                     { ",P", vim.diagnostic.goto_prev },
-                    { ",R", "<cmd>LspRestart<cr>" },
+                    { ",R", "<cmd>lsp restart<cr>" },
                 }
                 for _, v in ipairs(mappings) do
                     local seq, cmd = v[1], v[2]
@@ -600,25 +605,25 @@ local plugins = {
             map("n", "<leader>sh", function()
                 snacks.picker.help()
             end, { desc = "Help Pages" })
-            map("n", "<leader>gb", function()
+            map("n", "<leader>Gb", function()
                 snacks.picker.git_branches()
             end, { desc = "Git Branches" })
-            map("n", "<leader>gl", function()
+            map("n", "<leader>Gl", function()
                 snacks.picker.git_log()
             end, { desc = "Git Log" })
-            map("n", "<leader>gL", function()
+            map("n", "<leader>GL", function()
                 snacks.picker.git_log_line()
             end, { desc = "Git Log Line" })
-            map("n", "<leader>gs", function()
+            map("n", "<leader>Gs", function()
                 snacks.picker.git_status()
             end, { desc = "Git Status" })
-            map("n", "<leader>gS", function()
+            map("n", "<leader>GS", function()
                 snacks.picker.git_stash()
             end, { desc = "Git Stash" })
-            map("n", "<leader>gd", function()
+            map("n", "<leader>Gd", function()
                 snacks.picker.git_diff()
             end, { desc = "Git Diff (Hunks)" })
-            map("n", "<leader>gf", function()
+            map("n", "<leader>Gf", function()
                 snacks.picker.git_log_file()
             end, { desc = "Git Log File" })
             map("n", "Q", function()
@@ -782,6 +787,25 @@ for k, v in pairs(options) do
 end
 
 -- key mappings
+vim.keymap.set({ "n", "x" }, "&", function()
+    vim.cmd('normal! "zy' .. (vim.fn.mode() == "n" and "iw" or ""))
+    vim.cmd("silent grep! " .. vim.fn.shellescape(vim.fn.getreg("z")))
+    vim.cmd("copen")
+end)
+
+map("n", "<Tab>", "<c-w>w")
+
+-- Map CSI u sequence for <c-i> (configured in tmux) to the default <c-i>
+-- behavior in nvim. This is to avoid a conflict with the tab mapping above,
+-- without turning on extkeys (which has some issues in tmux).
+vim.keymap.set("n", "\027[105;5u", function()
+    vim.api.nvim_feedkeys(
+        vim.api.nvim_replace_termcodes("<c-i>", true, false, true),
+        "n",
+        false
+    )
+end)
+
 map({ "v", "n" }, "<space>", ":nohl<cr>zz")
 
 map("n", "<leader><leader>", "<cmd>set invpaste paste?<cr>")
