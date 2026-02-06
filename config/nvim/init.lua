@@ -777,7 +777,7 @@ local options = {
     tabstop = 4,
     textwidth = 80,
     undofile = true,
-    grepprg = "rg --vimgrep -uu --no-messages",
+    grepprg = "rg --vimgrep --no-messages",
 
     -- window options
     linebreak = true,
