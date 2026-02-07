@@ -510,7 +510,6 @@ local plugins = {
                 indent = {
                     enabled = false,
                     indent = {
-                        only_scope = true,
                         char = "┊",
                     },
                     scope = {
@@ -812,9 +811,8 @@ end)
 
 map({ "v", "n" }, "<space>", ":nohl<cr>zz")
 
-map("n", "<leader><leader>", "<cmd>set invpaste paste?<cr>")
-map("n", "<leader>n", "<cmd>set invnumber number?<cr>")
-map("n", ",w", "<cmd>set invwrap wrap?<cr>")
+map("n", "<leader>n", "<cmd>silent! set invnumber number?<cr>")
+map("n", ",w", "<cmd>silent! set invwrap wrap?<cr>")
 
 map("n", "<c-z>", "<cmd>terminal<cr>i")
 map("n", "<c-n>", "<cmd>bn<cr>")
