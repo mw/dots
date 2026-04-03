@@ -4,9 +4,16 @@ theme = TokyoNight Storm
 cursor-style = block
 cursor-color = #D47EFF
 font-size = 12
-font-thicken = true
-font-family = Monaspace Neon
-font-variation = wght=300
+font-thicken = false
+
+font-family = "Monaspace Neon Var"
+font-family-italic = "Monaspace Argon Var"
+font-family-bold-italic = "Monaspace Krypton Var"
+font-feature = +calt, +liga, +ss01, +ss02, +ss03, +ss04
+font-feature = +ss05, +ss06, +ss07, +ss08, +ss09, +ss10
+font-feature = cv02=1
+font-feature = cv30=1
+font-feature = cv31=1
 
 keybind = alt+enter=toggle_fullscreen
 keybind = ctrl+alt+n=new_window

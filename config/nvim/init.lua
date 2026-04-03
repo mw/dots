@@ -24,11 +24,13 @@ local plugins = {
             map("n", "<m-m>", "<cmd>Markview toggle<cr>")
         end,
     },
-    { "https://github.com/github/copilot.vim" },
     {
         "https://github.com/folke/which-key.nvim",
         function()
-            require("which-key").setup({})
+            require("which-key").setup({
+                preset = "modern",
+                delay = 1000,
+            })
         end,
     },
     { "https://github.com/rafamadriz/friendly-snippets" },
@@ -344,6 +346,7 @@ local plugins = {
             })
             map("n", "<leader>B", "<cmd>Gitsigns blame<cr>")
             map("n", "<M-b>", "<cmd>Gitsigns toggle_current_line_blame<cr>")
+            map("n", "R", "<cmd>Gitsigns setqflist<cr>")
         end,
     },
     { "https://github.com/kshenoy/vim-signature" },
@@ -405,6 +408,7 @@ local plugins = {
                 "html",
                 "javascript",
                 "json",
+                "ledger",
                 "lua",
                 "make",
                 "markdown",
@@ -440,6 +444,26 @@ local plugins = {
                             "v:lua.require'nvim-treesitter'.indentexpr()"
                     end
                 end,
+            })
+            vim.keymap.set({ "n", "x", "o" }, "<A-o>", function()
+                if vim.treesitter.get_parser(nil, nil, { error = false }) then
+                    require("vim.treesitter._select").select_parent(
+                        vim.v.count1
+                    )
+                else
+                    vim.lsp.buf.selection_range(vim.v.count1)
+                end
+            end, {
+                desc = "Select parent treesitter node",
+            })
+            vim.keymap.set({ "n", "x", "o" }, "<A-i>", function()
+                if vim.treesitter.get_parser(nil, nil, { error = false }) then
+                    require("vim.treesitter._select").select_child(vim.v.count1)
+                else
+                    vim.lsp.buf.selection_range(-vim.v.count1)
+                end
+            end, {
+                desc = "Select child treesitter node",
             })
         end,
     },
@@ -744,6 +768,7 @@ local options = {
     backupdir = "/tmp,.",
     cmdheight = 0,
     completeopt = "menuone,noinsert,noselect",
+    fillchars = "diff:╱",
     foldenable = false,
     hidden = true,
     hlsearch = true,
