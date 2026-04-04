@@ -6,8 +6,39 @@ function map(mode, lhs, rhs, opts)
     vim.keymap.set(mode, lhs, rhs, options)
 end
 
+-- maximize tmux pane, useful for viewing diffs
+local function set_tmux_zoom(should_zoom)
+    if not vim.env.TMUX_PANE then
+        return
+    end
+    local is_zoomed = vim.trim(vim.fn.system({
+        "tmux",
+        "display-message",
+        "-p",
+        "-t",
+        vim.env.TMUX_PANE,
+        "#{window_zoomed_flag}",
+    })) == "1"
+    if is_zoomed == should_zoom then
+        return
+    end
+    vim.fn.system({
+        "tmux",
+        "resize-pane",
+        "-Z",
+        "-t",
+        vim.env.TMUX_PANE,
+    })
+end
+
 -- plugin configuration
 local plugins = {
+    {
+        "nvim.undotree",
+        function()
+            map("n", "<leader>u", "<cmd>Undotree<cr>")
+        end,
+    },
     {
         "https://github.com/folke/tokyonight.nvim",
         function()
@@ -25,6 +56,51 @@ local plugins = {
         end,
     },
     {
+        "https://github.com/sindrets/diffview.nvim",
+        function()
+            local function jump_change(key)
+                vim.cmd.normal({
+                    args = { ("%d%s"):format(vim.v.count1, key) },
+                    bang = true,
+                })
+            end
+
+            require("diffview").setup({
+                hooks = {
+                    diff_buf_read = function(bufnr)
+                        map("n", "(", function()
+                            jump_change("[c")
+                        end, {
+                            buffer = bufnr,
+                            desc = "Previous change",
+                        })
+                        map("n", ")", function()
+                            jump_change("]c")
+                        end, {
+                            buffer = bufnr,
+                            desc = "Next change",
+                        })
+                    end,
+                },
+            })
+            map("n", "<leader><leader>", function()
+                if require("diffview.lib").get_current_view() then
+                    set_tmux_zoom(false)
+                    vim.cmd("DiffviewClose")
+                else
+                    set_tmux_zoom(true)
+                    vim.cmd("DiffviewOpen -uno")
+                    vim.schedule(function()
+                        local view = require("diffview.lib").get_current_view()
+                        if view and view.class:name() == "DiffView" then
+                            view.panel:close()
+                        end
+                    end)
+                end
+            end)
+        end,
+    },
+    {
         "https://github.com/folke/which-key.nvim",
         function()
             require("which-key").setup({
@@ -33,246 +109,157 @@ local plugins = {
             })
         end,
     },
-    { "https://github.com/rafamadriz/friendly-snippets" },
-    {
-        "https://github.com/saghen/blink.cmp",
-        function(plugin)
-            if not plugin or not plugin.path then
-                return
-            end
-            local built =
-                vim.fn.glob(plugin.path .. "/target/release/*blink*cmp*fuzzy*")
-            if built ~= "" then
-                return
-            end
-            vim.notify("Building blink.cmp...", vim.log.levels.INFO)
-            local cmd = { "nix", "run", ".#build-plugin" }
-            local result = vim.system(cmd, { cwd = plugin.path }):wait()
-            if result.code ~= 0 then
-                vim.notify("blink.cmp build failed", vim.log.levels.WARN)
-            end
-            require("blink.cmp").setup({
-                keymap = {
-                    preset = "super-tab",
-                    ["<m-space>"] = { "show" },
-                },
-                completion = {
-                    menu = {
-                        auto_show = false,
-                        border = "rounded",
-                        winhighlight = "Normal:BlinkCmpDoc,"
-                            .. "FloatBorder:BlinkCmpDocBorder,"
-                            .. "CursorLine:BlinkCmpDocCursorLine,"
-                            .. "Search:None",
-                    },
-                    documentation = {
-                        auto_show = true,
-                        auto_show_delay_ms = 500,
-                        window = { border = "rounded" },
-                    },
-                },
-                appearance = {
-                    use_nvim_cmp_as_default = true,
-                    nerd_font_variant = "mono",
-                },
-                sources = {
-                    default = { "lsp", "path", "snippets" },
-                },
-                fuzzy = {
-                    implementation = "prefer_rust_with_warning",
-                },
-            })
-        end,
-    },
     {
         "https://github.com/neovim/nvim-lspconfig",
         function()
             local cfg = require("lspconfig")
             local servers = {
-                {
-                    "clangd",
-                    {
-                        cmd = {
-                            "nix",
-                            "shell",
-                            "nixpkgs#clang-tools",
-                            "-c",
-                            "clangd",
-                            "--background-index",
-                            "--log=verbose",
-                        },
+                clangd = {
+                    cmd = {
+                        "nix",
+                        "shell",
+                        "nixpkgs#clang-tools",
+                        "-c",
+                        "clangd",
+                        "--background-index",
+                        "--log=verbose",
                     },
                 },
-                {
-                    "cssls",
-                    {
-                        cmd = {
-                            "nix",
-                            "shell",
-                            "nixpkgs#vscode-langservers-extracted",
-                            "-c",
-                            "vscode-css-language-server",
-                            "--stdio",
-                        },
+                cssls = {
+                    cmd = {
+                        "nix",
+                        "shell",
+                        "nixpkgs#vscode-langservers-extracted",
+                        "-c",
+                        "vscode-css-language-server",
+                        "--stdio",
                     },
                 },
-                {
-                    "html",
-                    {
-                        cmd = {
-                            "nix",
-                            "shell",
-                            "nixpkgs#vscode-langservers-extracted",
-                            "-c",
-                            "vscode-html-language-server",
-                            "--stdio",
-                        },
+                html = {
+                    cmd = {
+                        "nix",
+                        "shell",
+                        "nixpkgs#vscode-langservers-extracted",
+                        "-c",
+                        "vscode-html-language-server",
+                        "--stdio",
                     },
                 },
-                {
-                    "jsonls",
-                    {
-                        cmd = {
-                            "nix",
-                            "shell",
-                            "nixpkgs#vscode-langservers-extracted",
-                            "-c",
-                            "vscode-json-language-server",
-                            "--stdio",
-                        },
+                jsonls = {
+                    cmd = {
+                        "nix",
+                        "shell",
+                        "nixpkgs#vscode-langservers-extracted",
+                        "-c",
+                        "vscode-json-language-server",
+                        "--stdio",
                     },
                 },
-                {
-                    "nixd",
-                    {
-                        cmd = {
+                nixd = {
+                    cmd = {
+                        "nix",
+                        "run",
+                        "nixpkgs#nixd",
+                    },
+                    formatting = {
+                        command = {
                             "nix",
                             "run",
-                            "nixpkgs#nixd",
+                            "nixpkgs#nixfmt",
                         },
-                        formatting = {
-                            command = {
-                                "nix",
-                                "run",
-                                "nixpkgs#nixfmt",
+                    },
+                },
+                gopls = {
+                    cmd = {
+                        "nix",
+                        "run",
+                        "nixpkgs#gopls",
+                    },
+                    root_dir = cfg.util.root_pattern(
+                        "Gopkg.toml",
+                        "go.mod",
+                        ".git"
+                    ),
+                },
+                ruff = {
+                    cmd = {
+                        "uvx",
+                        "ruff",
+                        "server",
+                    },
+                },
+                ty = {
+                    cmd = {
+                        "uvx",
+                        "ty",
+                        "server",
+                    },
+                },
+                lua_ls = {
+                    cmd = {
+                        "nix",
+                        "run",
+                        "nixpkgs#luajitPackages.lua-lsp",
+                    },
+                    format = {
+                        enable = true,
+                    },
+                    settings = {
+                        Lua = {
+                            runtime = {
+                                version = "LuaJIT",
+                            },
+                            diagnostics = {
+                                globals = { "vim" },
+                            },
+                            workspace = {
+                                library = vim.api.nvim_get_runtime_file(
+                                    "",
+                                    true
+                                ),
+                                checkThirdParty = false,
+                            },
+                            telemetry = {
+                                enable = false,
                             },
                         },
                     },
                 },
-                {
-                    "gopls",
-                    {
-                        cmd = {
-                            "nix",
-                            "run",
-                            "nixpkgs#gopls",
-                        },
-                        root_dir = cfg.util.root_pattern(
-                            "Gopkg.toml",
-                            "go.mod",
-                            ".git"
-                        ),
+                stylua = {
+                    cmd = {
+                        "nix",
+                        "run",
+                        "nixpkgs#stylua",
+                        "--",
+                        "--lsp",
                     },
                 },
-                {
-                    "ruff",
-                    {
-                        cmd = {
-                            "uvx",
-                            "ruff",
-                            "server",
-                        },
+                rust_analyzer = {
+                    cmd = {
+                        "nix",
+                        "run",
+                        "nixpkgs#rust-analyzer",
                     },
                 },
-                {
-                    "ty",
-                    {
-                        cmd = {
-                            "uvx",
-                            "ty",
-                            "server",
-                        },
+                ts_ls = {
+                    cmd = {
+                        "nix",
+                        "run",
+                        "nixpkgs#nodePackages.typescript-language-server",
+                        "--",
+                        "--stdio",
                     },
                 },
-                {
-                    "lua_ls",
-                    {
-                        cmd = {
-                            "nix",
-                            "run",
-                            "nixpkgs#luajitPackages.lua-lsp",
-                        },
-                        format = {
-                            enable = true,
-                        },
-                        settings = {
-                            Lua = {
-                                runtime = {
-                                    version = "LuaJIT",
-                                },
-                                diagnostics = {
-                                    globals = { "vim" },
-                                },
-                                workspace = {
-                                    library = vim.api.nvim_get_runtime_file(
-                                        "",
-                                        true
-                                    ),
-                                    checkThirdParty = false,
-                                },
-                                telemetry = {
-                                    enable = false,
-                                },
-                            },
-                        },
-                    },
-                },
-                {
-                    "stylua",
-                    {
-                        cmd = {
-                            "nix",
-                            "run",
-                            "nixpkgs#stylua",
-                            "--",
-                            "--lsp",
-                        },
-                    },
-                },
-                {
-                    "rust_analyzer",
-                    {
-                        cmd = {
-                            "nix",
-                            "run",
-                            "nixpkgs#rust-analyzer",
-                        },
-                    },
-                },
-                {
-                    "ts_ls",
-                    {
-                        cmd = {
-                            "nix",
-                            "run",
-                            "nixpkgs#nodePackages.typescript-language-server",
-                            "--",
-                            "--stdio",
-                        },
-                    },
-                },
-                {
-                    "tombi",
-                    {
-                        cmd = {
-                            "uvx",
-                            "tombi",
-                            "lsp",
-                        },
+                tombi = {
+                    cmd = {
+                        "uvx",
+                        "tombi",
+                        "lsp",
                     },
                 },
             }
 
+            -- Set up LSP servers
             local function on_attach(client, bufnr)
                 local mappings = {
                     { ",d", vim.lsp.buf.definition },
@@ -305,19 +292,129 @@ local plugins = {
                     augroup END
                 ]])
                 end
+                if client:supports_method("textDocument/completion") then
+                    vim.lsp.completion.enable(true, client.id, bufnr, {
+                        autotrigger = true,
+                    })
+                end
                 vim.diagnostic.config({ underline = false })
             end
 
-            local capabilities = require("blink.cmp").get_lsp_capabilities({})
+            local capabilities = vim.lsp.protocol.make_client_capabilities()
             local defaults = {
                 on_attach = on_attach,
                 capabilities = capabilities,
             }
-            for _, val in ipairs(servers) do
-                local lsp, opts =
-                    val[1], vim.tbl_extend("force", defaults, val[2])
-                vim.lsp.config[lsp] = opts
-                vim.lsp.enable(lsp)
+            for lsp, opts in pairs(servers) do
+                vim.lsp.config[lsp] = vim.tbl_extend("force", defaults, opts)
+            end
+
+            -- LSP servers can use a lot of memory. Don't run more than one
+            -- instance of an LSP server across different nvim instances. When
+            -- attaching LSP servers, indicate to the previous nvim instance
+            -- running that server to shut its server down.
+            local names = vim.tbl_keys(servers)
+            local servername = vim.v.servername
+            if servername == "" then
+                local ok, value = pcall(vim.fn.serverstart, "lsp")
+                if ok then
+                    servername = value
+                end
+            end
+
+            if servername == "" then
+                for _, lsp in ipairs(names) do
+                    vim.lsp.enable(lsp)
+                end
+            else
+                local pid = vim.fn.getpid()
+
+                local function lease_path(name)
+                    return vim.fs.joinpath(
+                        vim.uv.os_tmpdir(),
+                        "nvim-lsp-" .. name
+                    )
+                end
+
+                local function read_lease(name)
+                    local ok, lines = pcall(vim.fn.readfile, lease_path(name))
+                    if not ok or #lines < 2 then
+                        return
+                    end
+                    local owner_pid = tonumber(lines[1])
+                    local owner_servername = lines[2]
+                    if not owner_pid or owner_servername == "" then
+                        return
+                    end
+                    return owner_pid, owner_servername
+                end
+
+                local function claim(name)
+                    local owner_pid, owner_servername = read_lease(name)
+                    if
+                        owner_pid
+                        and owner_pid ~= pid
+                        and owner_servername ~= servername
+                        and vim.uv.kill(owner_pid, 0) == 0
+                    then
+                        local ok, chan = pcall(
+                            vim.fn.sockconnect,
+                            "pipe",
+                            owner_servername,
+                            { rpc = true }
+                        )
+                        if ok and chan > 0 then
+                            pcall(
+                                vim.rpcrequest,
+                                chan,
+                                "nvim_exec_lua",
+                                "_G.lease_suspend_lsp(...)",
+                                { name }
+                            )
+                            vim.fn.chanclose(chan)
+                        end
+                    end
+                    vim.fn.writefile(
+                        { tostring(pid), servername },
+                        lease_path(name)
+                    )
+                end
+
+                local function enable_all()
+                    for _, name in ipairs(names) do
+                        if not vim.lsp.is_enabled(name) then
+                            vim.lsp.enable(name)
+                        end
+                    end
+                end
+
+                _G.lease_suspend_lsp = function(name)
+                    if vim.lsp.is_enabled(name) then
+                        vim.lsp.enable(name, false)
+                    end
+                end
+
+                local group =
+                    vim.api.nvim_create_augroup("lsp_focus", { clear = true })
+                vim.api.nvim_create_autocmd(
+                    { "VimEnter", "VimResume", "FocusGained" },
+                    {
+                        group = group,
+                        callback = function()
+                            enable_all()
+                        end,
+                    }
+                )
+                vim.api.nvim_create_autocmd("LspAttach", {
+                    group = group,
+                    callback = function(args)
+                        local client =
+                            vim.lsp.get_client_by_id(args.data.client_id)
+                        if client then
+                            claim(client.name)
+                        end
+                    end,
+                })
             end
             vim.diagnostic.config({
                 virtual_text = {
@@ -344,12 +441,20 @@ local plugins = {
                     virt_text_pos = "eol",
                 },
             })
+            vim.api.nvim_create_user_command("GitDiffCommit", function(opts)
+                set_tmux_zoom(true)
+                vim.cmd({
+                    cmd = "DiffviewOpen",
+                    args = { opts.args .. "^!" },
+                })
+            end, {
+                nargs = 1,
+            })
             map("n", "<leader>B", "<cmd>Gitsigns blame<cr>")
             map("n", "<M-b>", "<cmd>Gitsigns toggle_current_line_blame<cr>")
             map("n", "R", "<cmd>Gitsigns setqflist<cr>")
         end,
     },
-    { "https://github.com/kshenoy/vim-signature" },
     {
         "https://github.com/stevearc/quicker.nvim",
         function()
@@ -630,15 +735,6 @@ local plugins = {
             map("n", "<leader>sh", function()
                 snacks.picker.help()
             end, { desc = "Help Pages" })
-            map("n", "<leader>Gb", function()
-                snacks.picker.git_branches()
-            end, { desc = "Git Branches" })
-            map("n", "<leader>Gl", function()
-                snacks.picker.git_log()
-            end, { desc = "Git Log" })
-            map("n", "<leader>GL", function()
-                snacks.picker.git_log_line()
-            end, { desc = "Git Log Line" })
             map("n", "<leader>Gs", function()
                 snacks.picker.git_status()
             end, { desc = "Git Status" })
@@ -648,15 +744,38 @@ local plugins = {
             map("n", "<leader>Gd", function()
                 snacks.picker.git_diff()
             end, { desc = "Git Diff (Hunks)" })
-            map("n", "<leader>Gf", function()
-                snacks.picker.git_log_file()
-            end, { desc = "Git Log File" })
             map("n", "<leader>W", function()
                 snacks.picker.diagnostics()
             end, { desc = "LSP Diagnostics" })
             map("n", "Q", function()
                 snacks.bufdelete()
             end, { desc = "Delete Buffer" })
+            local function show_git_diff_commit(picker, item)
+                picker:close()
+                if item and item.commit then
+                    vim.schedule(function()
+                        vim.cmd.GitDiffCommit(item.commit)
+                    end)
+                end
+            end
+            map("n", "<leader>Gb", function()
+                snacks.picker.git_branches()
+            end, { desc = "Git Branches" })
+            map("n", "<leader>Gl", function()
+                snacks.picker.git_log({
+                    confirm = show_git_diff_commit,
+                })
+            end, { desc = "Git Log" })
+            map("n", "<leader>GL", function()
+                snacks.picker.git_log_line({
+                    confirm = show_git_diff_commit,
+                })
+            end, { desc = "Git Log Line" })
+            map("n", "<leader>Gf", function()
+                snacks.picker.git_log_file({
+                    confirm = show_git_diff_commit,
+                })
+            end, { desc = "Git Log File" })
         end,
     },
     {
@@ -730,17 +849,27 @@ local valid = {}
 for _, plugin in ipairs(plugins) do
     local src = plugin[1]
     local setup = plugin[2]
-    local opts = plugin[3] or {}
-    local name = src:match("([^/]+)$")
-    table.insert(specs, {
-        src = src,
-        name = name,
-        version = opts.version,
-        data = {
-            setup = setup,
-        },
-    })
-    valid[name] = true
+    if src:find("/") then
+        local name = src:match("([^/]+)$")
+        table.insert(specs, {
+            src = src,
+            name = name,
+            version = plugin[3] and plugin[3].version,
+            data = {
+                setup = setup,
+            },
+        })
+        valid[name] = true
+    else
+        vim.cmd.packadd(src)
+        if setup then
+            setup({
+                spec = {
+                    name = src,
+                },
+            })
+        end
+    end
 end
 
 for _, entry in ipairs(vim.pack.get()) do
@@ -752,10 +881,10 @@ end
 
 vim.pack.add(specs, {
     load = function(plugin)
-        local data = plugin.spec.data or {}
         vim.cmd.packadd(plugin.spec.name)
-        if data.setup then
-            data.setup(plugin)
+        local setup = plugin.spec.data and plugin.spec.data.setup
+        if setup then
+            setup(plugin)
         end
     end,
 })
@@ -767,7 +896,17 @@ local options = {
     backup = true,
     backupdir = "/tmp,.",
     cmdheight = 0,
-    completeopt = "menuone,noinsert,noselect",
+    completeitemalign = "abbr,kind,menu",
+    completeopt = "menu,menuone,noinsert,noselect,popup",
+    diffopt = {
+        "internal",
+        "filler",
+        "closeoff",
+        "context:10",
+        "algorithm:histogram",
+        "indent-heuristic",
+        "inline:char",
+    },
     fillchars = "diff:╱",
     foldenable = false,
     hidden = true,
@@ -776,6 +915,11 @@ local options = {
     joinspaces = false,
     laststatus = 3,
     mouse = "a",
+    pumblend = 8,
+    pumborder = "rounded",
+    pumheight = 12,
+    pummaxwidth = 50,
+    pumwidth = 20,
     report = 0,
     sessionoptions = "buffers",
     shortmess = "filnxtToOFc",
@@ -786,6 +930,7 @@ local options = {
     smartcase = true,
     smarttab = true,
     splitright = true,
+    showtabline = 0,
     termguicolors = true,
     undolevels = 8000,
     undoreload = 30000,
@@ -823,7 +968,12 @@ vim.keymap.set({ "n", "x" }, "&", function()
     vim.cmd("copen")
 end)
 
-map("n", "<Tab>", "<c-w>w")
+map("i", "<Tab>", function()
+    return vim.fn.pumvisible() == 1 and "<c-n>" or "<Tab>"
+end, { expr = true })
+map("i", "<s-tab>", function()
+    return vim.fn.pumvisible() == 1 and "<c-p>" or "<s-tab>"
+end, { expr = true })
 
 -- Map the tmux-sent F13 sequence for <c-i> to the default <c-i> behavior
 vim.keymap.set("n", "<F13>", function()
