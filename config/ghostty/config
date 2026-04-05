@@ -14,6 +14,7 @@ font-feature = +ss05, +ss06, +ss07, +ss08, +ss09, +ss10
 font-feature = cv02=1
 font-feature = cv30=1
 font-feature = cv31=1
+font-variation = wght=400
 
 keybind = alt+enter=toggle_fullscreen
 keybind = ctrl+alt+n=new_window
