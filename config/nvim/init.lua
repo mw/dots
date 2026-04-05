@@ -907,7 +907,7 @@ local options = {
         "indent-heuristic",
         "inline:char",
     },
-    fillchars = "diff:╱",
+    fillchars = "diff: ",
     foldenable = false,
     hidden = true,
     hlsearch = true,
