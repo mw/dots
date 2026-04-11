@@ -113,6 +113,17 @@ local plugins = {
         "https://github.com/neovim/nvim-lspconfig",
         function()
             local cfg = require("lspconfig")
+            local completion_enable = vim.lsp.completion.enable
+
+            vim.lsp.completion.enable = function(enable, client_id, bufnr, opts)
+                -- Buffer reload callbacks can outlive the client they were
+                -- created for when a server is suspended from another nvim.
+                if enable and not vim.lsp.get_client_by_id(client_id) then
+                    return true
+                end
+                return completion_enable(enable, client_id, bufnr, opts)
+            end
+
             local servers = {
                 clangd = {
                     cmd = {
