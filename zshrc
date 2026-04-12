@@ -86,11 +86,11 @@ fi
 if command -v direnv &> /dev/null; then
     eval "$(direnv hook zsh)"
 fi
-if command -v ssh-agent &> /dev/null; then
+if command -v ssh-agent &> /dev/null && [[ -z ${SSH_AUTH_SOCK:-} ]]; then
     export SSH_AUTH_SOCK="$HOME/.ssh/ssh-agent.sock"
     if ! ssh-add -l >/dev/null 2>&1; then
-      [ -S "$SSH_AUTH_SOCK" ] && rm "$SSH_AUTH_SOCK"
-      eval "$(ssh-agent -a "$SSH_AUTH_SOCK")" >/dev/null
+        [ -S "$SSH_AUTH_SOCK" ] && rm "$SSH_AUTH_SOCK"
+        eval "$(ssh-agent -a "$SSH_AUTH_SOCK")" >/dev/null
     fi
 fi
 if [[ -f ~/.nix-profile/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
