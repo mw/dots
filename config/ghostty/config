@@ -34,4 +34,5 @@ keybind = alt+left=text:\x01H
 keybind = alt+right=text:\x01L
 
 macos-non-native-fullscreen = visible-menu
+macos-option-as-alt = left
 macos-titlebar-style = hidden
