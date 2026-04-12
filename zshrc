@@ -46,6 +46,7 @@ bindkey "\e[B" down-line-or-search
 local WORDCHARS=${WORDCHARS//\//}
 
 alias clip="base64 | tr -d '\n' | awk '{printf \"\033Ptmux;\033\033]52;c;%s\033\\\\\", \$0}'"
+alias py="uv run --python 3.14 python"
 
 stty start ""
 stty stop ""
