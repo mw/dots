@@ -90,12 +90,6 @@ local plugins = {
                 else
                     set_tmux_zoom(true)
                     vim.cmd("DiffviewOpen -uno")
-                    vim.schedule(function()
-                        local view = require("diffview.lib").get_current_view()
-                        if view and view.class:name() == "DiffView" then
-                            view.panel:close()
-                        end
-                    end)
                 end
             end)
         end,
@@ -112,7 +106,6 @@ local plugins = {
     {
         "https://github.com/neovim/nvim-lspconfig",
         function()
-            local cfg = require("lspconfig")
             local completion_enable = vim.lsp.completion.enable
 
             vim.lsp.completion.enable = function(enable, client_id, bufnr, opts)
@@ -186,11 +179,6 @@ local plugins = {
                         "run",
                         "nixpkgs#gopls",
                     },
-                    root_dir = cfg.util.root_pattern(
-                        "Gopkg.toml",
-                        "go.mod",
-                        ".git"
-                    ),
                 },
                 ruff = {
                     cmd = {

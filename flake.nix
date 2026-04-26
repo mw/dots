@@ -38,7 +38,9 @@
               git-lfs
               gnutar
               go
+              jjui
               jq
+              jujutsu
               lsd
               ncurses5
               neovim

@@ -1,14 +1,6 @@
-.hg
-.~
-*.swp
-.svn
-CVS
+.DS_Store
 *.o
 *.a
 *.pyc
-*.class
-*.session
-.ycm_extra_conf.py
-.tags
-tags
 .clangd
+.codex
