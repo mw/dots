@@ -29,6 +29,7 @@
               bat
               bottom
               coreutils-prefixed
+              difftastic
               diffutils
               direnv
               fd
