@@ -1,0 +1,43 @@
+[[actions]]
+name = "diffview"
+lua = '''
+local rev = jjui.context.change_id()
+if not rev then
+    rev = jjui.context.commit_id()
+end
+if not rev then
+    jjui.flash({ text = "No revision selected", error = true })
+    return
+end
+
+local empty = jjui.jj({"log", "-r", rev, "-T", "empty", "--no-graph"})
+if empty == "true" then
+    jjui.flash({ text = "Change is empty", error = true })
+    return
+end
+
+local file = jjui.context.file()
+if file then
+    jjui.jj_interactive({ "diffview", rev, "--", file })
+else
+    jjui.jj_interactive({ "diffview", rev })
+end
+'''
+
+[[bindings]]
+key = "d"
+action = "diffview"
+scope = "revisions"
+desc = "diffview"
+
+[[bindings]]
+key = "d"
+action = "diffview"
+scope = "revisions.details"
+desc = "diffview"
+
+[[bindings]]
+key = "d"
+action = "diffview"
+scope = "revisions.evolog"
+desc = "diffview"

@@ -29,7 +29,7 @@
               bat
               bottom
               coreutils-prefixed
-              difftastic
+              delta
               diffutils
               direnv
               fd
@@ -45,6 +45,7 @@
               lsd
               ncurses5
               neovim
+              neovim-remote
               nix-direnv
               nmap
               rclone

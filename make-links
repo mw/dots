@@ -3,6 +3,7 @@
 FILES="
 config/ghostty
 config/jj/config.toml
+config/jjui
 config/nix
 config/nvim
 config/starship.toml

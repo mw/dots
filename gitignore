@@ -5,3 +5,4 @@
 .clangd
 .codex
 .envrc
+.nvim.sock

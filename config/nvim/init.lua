@@ -65,8 +65,26 @@ local plugins = {
                 })
             end
 
+            local return_panes = {}
             require("diffview").setup({
                 hooks = {
+                    view_opened = function(view)
+                        return_panes[view] = vim.g.diffview_return_pane
+                        vim.g.diffview_return_pane = nil
+                    end,
+                    view_closed = function(view)
+                        set_tmux_zoom(false)
+                        local pane = return_panes[view]
+                        return_panes[view] = nil
+                        if pane then
+                            vim.fn.system({
+                                "tmux",
+                                "select-pane",
+                                "-t",
+                                pane,
+                            })
+                        end
+                    end,
                     diff_buf_read = function(bufnr)
                         map("n", "(", function()
                             jump_change("[c")
@@ -307,114 +325,6 @@ local plugins = {
             for lsp, opts in pairs(servers) do
                 vim.lsp.config[lsp] = vim.tbl_extend("force", defaults, opts)
             end
-
-            -- LSP servers can use a lot of memory. Don't run more than one
-            -- instance of an LSP server across different nvim instances. When
-            -- attaching LSP servers, indicate to the previous nvim instance
-            -- running that server to shut its server down.
-            local names = vim.tbl_keys(servers)
-            local servername = vim.v.servername
-            if servername == "" then
-                local ok, value = pcall(vim.fn.serverstart, "lsp")
-                if ok then
-                    servername = value
-                end
-            end
-
-            if servername == "" then
-                for _, lsp in ipairs(names) do
-                    vim.lsp.enable(lsp)
-                end
-            else
-                local pid = vim.fn.getpid()
-
-                local function lease_path(name)
-                    return vim.fs.joinpath(
-                        vim.uv.os_tmpdir(),
-                        "nvim-lsp-" .. name
-                    )
-                end
-
-                local function read_lease(name)
-                    local ok, lines = pcall(vim.fn.readfile, lease_path(name))
-                    if not ok or #lines < 2 then
-                        return
-                    end
-                    local owner_pid = tonumber(lines[1])
-                    local owner_servername = lines[2]
-                    if not owner_pid or owner_servername == "" then
-                        return
-                    end
-                    return owner_pid, owner_servername
-                end
-
-                local function claim(name)
-                    local owner_pid, owner_servername = read_lease(name)
-                    if
-                        owner_pid
-                        and owner_pid ~= pid
-                        and owner_servername ~= servername
-                        and vim.uv.kill(owner_pid, 0) == 0
-                    then
-                        local ok, chan = pcall(
-                            vim.fn.sockconnect,
-                            "pipe",
-                            owner_servername,
-                            { rpc = true }
-                        )
-                        if ok and chan > 0 then
-                            pcall(
-                                vim.rpcrequest,
-                                chan,
-                                "nvim_exec_lua",
-                                "_G.lease_suspend_lsp(...)",
-                                { name }
-                            )
-                            vim.fn.chanclose(chan)
-                        end
-                    end
-                    vim.fn.writefile(
-                        { tostring(pid), servername },
-                        lease_path(name)
-                    )
-                end
-
-                local function enable_all()
-                    for _, name in ipairs(names) do
-                        if not vim.lsp.is_enabled(name) then
-                            vim.lsp.enable(name)
-                        end
-                    end
-                end
-
-                _G.lease_suspend_lsp = function(name)
-                    if vim.lsp.is_enabled(name) then
-                        vim.lsp.enable(name, false)
-                    end
-                end
-
-                local group =
-                    vim.api.nvim_create_augroup("lsp_focus", { clear = true })
-                vim.api.nvim_create_autocmd(
-                    { "VimEnter", "VimResume", "FocusGained" },
-                    {
-                        group = group,
-                        callback = function()
-                            enable_all()
-                        end,
-                    }
-                )
-                vim.api.nvim_create_autocmd("LspAttach", {
-                    group = group,
-                    callback = function(args)
-                        local client =
-                            vim.lsp.get_client_by_id(args.data.client_id)
-                        if client then
-                            claim(client.name)
-                        end
-                    end,
-                })
-            end
             vim.diagnostic.config({
                 virtual_text = {
                     prefix = "●",
@@ -429,6 +339,98 @@ local plugins = {
                     },
                 },
             })
+
+            -- LSP servers can use a lot of memory. Don't run more than one
+            -- instance of an LSP server across different nvim instances. When
+            -- attaching LSP servers, indicate to the previous nvim instance
+            -- running that server to shut its server down.
+            local names = vim.tbl_keys(servers)
+            local servername = vim.v.servername
+            local pid = vim.fn.getpid()
+
+            local function lease_path(name)
+                local data_dir = vim.fn.stdpath("data")
+                return vim.fs.joinpath(data_dir, "nvim-lsp-" .. name)
+            end
+
+            local function read_lease(name)
+                local ok, lines = pcall(vim.fn.readfile, lease_path(name))
+                if not ok or #lines < 2 then
+                    return
+                end
+                local owner_pid = tonumber(lines[1])
+                local owner_servername = lines[2]
+                if not owner_pid or owner_servername == "" then
+                    return
+                end
+                return owner_pid, owner_servername
+            end
+
+            local function claim(name)
+                local owner_pid, owner_servername = read_lease(name)
+                if
+                    owner_pid
+                    and owner_pid ~= pid
+                    and owner_servername ~= servername
+                    and vim.uv.kill(owner_pid, 0) == 0
+                then
+                    local ok, chan = pcall(
+                        vim.fn.sockconnect,
+                        "pipe",
+                        owner_servername,
+                        { rpc = true }
+                    )
+                    if ok and chan > 0 then
+                        pcall(
+                            vim.rpcrequest,
+                            chan,
+                            "nvim_exec_lua",
+                            "_G.lease_suspend_lsp(...)",
+                            { name }
+                        )
+                        vim.fn.chanclose(chan)
+                    end
+                end
+                vim.fn.writefile(
+                    { tostring(pid), servername },
+                    lease_path(name)
+                )
+            end
+
+            local function enable_all()
+                for _, name in ipairs(names) do
+                    if not vim.lsp.is_enabled(name) then
+                        vim.lsp.enable(name)
+                    end
+                end
+            end
+
+            _G.lease_suspend_lsp = function(name)
+                if vim.lsp.is_enabled(name) then
+                    vim.lsp.enable(name, false)
+                end
+            end
+
+            local group =
+                vim.api.nvim_create_augroup("lsp_focus", { clear = true })
+            vim.api.nvim_create_autocmd(
+                { "VimEnter", "VimResume", "FocusGained" },
+                {
+                    group = group,
+                    callback = function()
+                        enable_all()
+                    end,
+                }
+            )
+            vim.api.nvim_create_autocmd("LspAttach", {
+                group = group,
+                callback = function(args)
+                    local client = vim.lsp.get_client_by_id(args.data.client_id)
+                    if client then
+                        claim(client.name)
+                    end
+                end,
+            })
         end,
     },
     { "https://github.com/machakann/vim-sandwich" },
@@ -442,12 +444,26 @@ local plugins = {
             })
             vim.api.nvim_create_user_command("GitDiffCommit", function(opts)
                 set_tmux_zoom(true)
-                vim.cmd({
+                local args = { opts.fargs[1] .. "^!" }
+                for i = 2, #opts.fargs do
+                    local arg = opts.fargs[i]
+                    local pane = arg:match("^-return%-pane=(.+)$")
+                    if pane then
+                        vim.g.diffview_return_pane = pane
+                    else
+                        args[#args + 1] = arg
+                    end
+                end
+                local ok, err = pcall(vim.cmd, {
                     cmd = "DiffviewOpen",
-                    args = { opts.args .. "^!" },
+                    args = args,
                 })
+                if not ok then
+                    vim.g.diffview_return_pane = nil
+                    error(err)
+                end
             end, {
-                nargs = 1,
+                nargs = "+",
             })
             map("n", "<leader>B", "<cmd>Gitsigns blame<cr>")
             map("n", "<M-b>", "<cmd>Gitsigns toggle_current_line_blame<cr>")
@@ -893,7 +909,7 @@ local options = {
     -- global options
     backspace = "indent,eol,nostop",
     backup = true,
-    backupdir = "/tmp,.",
+    backupdir = vim.fs.joinpath(vim.fn.stdpath("data"), "backup"),
     cmdheight = 0,
     completeitemalign = "abbr,kind,menu",
     completeopt = "menu,menuone,noinsert,noselect,popup",

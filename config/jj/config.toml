@@ -6,10 +6,81 @@ email = "git@mw.mozmail.com"
 
 [ui]
 default-command = "jjui"
-diff-formatter = "difft"
-
-[aliases]
-jjui = ["util", "exec", "--", "jjui"]
+diff-formatter = "delta"
 
 [merge-tools.delta]
 diff-expected-exit-codes = [0, 1]
+diff-args = [
+  "--diff-so-fancy",
+  "--file-decoration-style",
+  "omit",
+  "--hunk-header-decoration-style",
+  "omit",
+  "$left",
+  "$right",
+]
+
+[aliases]
+# Open diff in an existing neovim instance.
+# Fall back to `jj show` if the server is not running.
+diffview = [
+  "util",
+  "exec",
+  "--",
+  "sh",
+  "-c",
+  '''
+set -eu
+rev=${1:-@}
+[ "$#" -gt 0 ] && shift
+
+commit=$(
+    jj --ignore-working-copy log --no-graph -r "$rev" -T 'commit_id'
+)
+
+quote() {
+    printf "'%s'" "$(printf '%s' "$1" | sed "s/'/''/g")"
+}
+
+root=$(quote "$JJ_WORKSPACE_ROOT")
+expr="execute('GitDiffCommit ' . $(quote "$commit")"
+expr="$expr . ' -C' . fnameescape($root)"
+
+if [ -n "${TMUX_PANE:-}" ]; then
+    expr="$expr . ' -return-pane=' . $(quote "$TMUX_PANE")"
+fi
+
+for arg do
+    expr="$expr . ' ' . fnameescape($(quote "$arg"))"
+done
+
+server="$PWD/.nvim.sock"
+if [ -e "$server" ]; then
+    exec nvr --nostart --servername "$server" --remote-expr "$expr)"
+else
+    exec jj show "$commit" -- "$@"
+fi
+''',
+  "",
+]
+
+jjui = ["util", "exec", "--", "jjui"]
+
+# temporary hack until jj adds colocated workspaces
+workspace-add = [
+  "util",
+  "exec",
+  "--",
+  "sh",
+  "-c",
+  '''
+set -eu
+jj workspace add "$1"
+cd "$1"
+echo "gitdir: $(jj git root)" > .git
+''',
+  "",
+]
+
+[git]
+private-commits = '''description('private:*')'''
