@@ -1,3 +1,6 @@
+[ui.colors]
+"selected" = { bg = "#20354a" }
+
 [[actions]]
 name = "diffview"
 lua = '''
@@ -10,7 +13,7 @@ if not rev then
     return
 end
 
-local empty = jjui.jj({"log", "-r", rev, "-T", "empty", "--no-graph"})
+local empty = jjui.jj({ "log", "-r", rev, "-T", "empty", "--no-graph" })
 if empty == "true" then
     jjui.flash({ text = "Change is empty", error = true })
     return
@@ -41,3 +44,88 @@ key = "d"
 action = "diffview"
 scope = "revisions.evolog"
 desc = "diffview"
+
+[[actions]]
+name = "forget_workspace"
+lua = '''
+local rev = jjui.context.change_id()
+if not rev then
+    rev = jjui.context.commit_id()
+end
+if not rev then
+    jjui.flash({ text = "No revision selected", error = true })
+    return
+end
+
+local template =
+    'working_copies.map(|w| w.name() ++ "\\t" ++ w.root() ++ "\\n")'
+local output = jjui.jj({ "log", "-r", rev, "-T", template, "--no-graph" })
+if output == "" then
+    jjui.flash({ text = "No workspace for selected change", error = true })
+    return
+end
+
+for line in output:gmatch("[^\n]+") do
+    local name, root = line:match("^([^\t]+)\t(.+)$")
+    if name and root then
+        jjui.jj({ "workspace", "forget", "--", name })
+        jjui.jj({ "util", "exec", "--", "rm", "-rf", "--", root })
+    end
+end
+
+jjui.flash({ text = "Workspace forgotten and deleted" })
+jjui.revisions.refresh({ keep_selections = false })
+'''
+
+[[bindings]]
+key = "F"
+action = "forget_workspace"
+scope = "revisions"
+desc = "forget workspace"
+
+[[bindings]]
+key = "F"
+action = "forget_workspace"
+scope = "revisions.details"
+desc = "forget workspace"
+
+[[bindings]]
+key = "F"
+action = "forget_workspace"
+scope = "revisions.evolog"
+desc = "forget workspace"
+
+[[actions]]
+name = "refresh"
+lua = '''
+local output = jjui.jj({
+    "workspace",
+    "list",
+    "--no-pager",
+    "-T",
+    'name ++ "\\t" ++ root ++ "\\n"',
+})
+local skipped = {}
+for line in output:gmatch("[^\n]+") do
+    local name, root = line:match("^([^\t]+)\t(.+)$")
+    if name and root then
+        local ok =
+            pcall(jjui.jj, { "-R", root, "util", "snapshot", "--no-pager" })
+        if not ok then
+            table.insert(skipped, name)
+        end
+    end
+end
+if #skipped > 0 then
+    jjui.flash({
+        text = "Skipped missing workspaces: " .. table.concat(skipped, ", "),
+    })
+end
+jjui.revisions.refresh({ keep_selections = true })
+'''
+
+[[bindings]]
+key = "ctrl+r"
+action = "refresh"
+scope = "revisions"
+desc = "refresh (snapshot all workspaces)"

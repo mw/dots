@@ -1,0 +1,246 @@
+#!/bin/sh
+
+action=$1
+pane=$2
+
+tab_session() {
+  printf '__pane-tabs_%s' "$1"
+}
+
+pane_group() {
+  tmux show-option -pqv -t "$1" @pane_tabs_group
+}
+
+set_group() {
+  tmux set-option -pq -t "$1" @pane_tabs_group "$2"
+}
+
+clear_group() {
+  tmux set-option -pqu -t "$1" @pane_tabs_group
+  tmux set-option -pqu -t "$1" @pane_tabs_index
+  tmux set-option -pqu -t "$1" @pane_tabs_status
+}
+
+set_status() {
+  tmux set-option -pq -t "$1" @pane_tabs_index "$2"
+  tmux set-option -pq -t "$1" @pane_tabs_status "$2/$3"
+}
+
+total_tabs() {
+  echo $(( $(tmux display-message -p -t "$1:" '#{session_windows}') + 1 ))
+}
+
+current_index() {
+  index=$(tmux show-option -pqv -t "$1" @pane_tabs_index)
+  echo "${index:-1}"
+}
+
+match_size() {
+  width=$(tmux display-message -p -t "$pane" '#{pane_width}')
+  height=$(tmux display-message -p -t "$pane" '#{pane_height}')
+  tmux resize-window -t "$(tmux display-message -p -t "$1" '#{window_id}')" -x "$width" -y "$height"
+}
+
+group_panes() {
+  tmux list-panes -a -F '#{pane_id} #{@pane_tabs_group}' |
+    awk -v group="$1" '$2 == group { print $1 }'
+}
+
+find_pane_by_index() {
+  tmux list-panes -a -F '#{pane_id} #{@pane_tabs_group} #{@pane_tabs_index}' |
+    awk -v group="$1" -v idx="$2" -v visible="$pane" '
+      $1 != visible && $2 == group && $3 == idx { print $1; exit }
+    '
+}
+
+renumber_after() {
+  group=$1
+  removed=$2
+  total=$3
+
+  group_panes "$group" |
+    while IFS= read -r item; do
+      index=$(current_index "$item")
+      [ "$index" -gt "$removed" ] && index=$((index - 1))
+
+      if [ "$total" -gt 1 ]; then
+        set_status "$item" "$index" "$total"
+      else
+        clear_group "$item"
+      fi
+    done
+}
+
+ensure_group() {
+  group=$(pane_group "$pane")
+  if [ -n "$group" ]; then
+    tabs=$(tab_session "$group")
+    return
+  fi
+
+  group=$(( $(tmux show-option -gqv @pane_tabs_next || echo 0) + 1 ))
+  tabs=$(tab_session "$group")
+  tmux set-option -gq @pane_tabs_next "$group"
+  set_group "$pane" "$group"
+  tmux set-option -pq -t "$pane" @pane_tabs_index 1
+}
+
+ensure_tabs() {
+  if ! tmux has-session -t "$tabs:" 2>/dev/null; then
+    tmux new-session -dP -F '#{pane_id}' -c "$path" -s "$tabs" -n __pane-tabs
+    return
+  fi
+  tmux new-window -dP -F '#{pane_id}' -c "$path" -t "$tabs:"
+}
+
+add_tab() {
+  ensure_group
+
+  path=$(tmux display-message -p -t "$pane" '#{pane_current_path}')
+  new=$(ensure_tabs)
+
+  set_group "$new" "$group"
+  match_size "$new"
+  tmux swap-pane -s "$new" -t "$pane" || exit 0
+
+  total=$(total_tabs "$tabs")
+  set_status "$new" "$total" "$total"
+  tmux select-pane -t "$new"
+}
+
+next_tab() {
+  group=$(pane_group "$pane")
+  [ -n "$group" ] || exit 0
+
+  tabs=$(tab_session "$group")
+  tmux has-session -t "$tabs:" 2>/dev/null || exit 0
+
+  total=$(total_tabs "$tabs")
+  [ "$total" -gt 1 ] || exit 0
+
+  current=$(current_index "$pane")
+  next=$((current % total + 1))
+
+  source=$(find_pane_by_index "$group" "$next")
+  [ -n "$source" ] || exit 0
+
+  match_size "$source"
+  tmux swap-pane -s "$source" -t "$pane" || exit 0
+  set_status "$source" "$next" "$total"
+}
+
+previous_tab() {
+  group=$(pane_group "$pane")
+  [ -n "$group" ] || exit 0
+
+  tabs=$(tab_session "$group")
+  tmux has-session -t "$tabs:" 2>/dev/null || exit 0
+
+  total=$(total_tabs "$tabs")
+  [ "$total" -gt 1 ] || exit 0
+
+  current=$(current_index "$pane")
+  prev=$((current - 1))
+  [ "$prev" -lt 1 ] && prev=$total
+
+  source=$(find_pane_by_index "$group" "$prev")
+  [ -n "$source" ] || exit 0
+
+  match_size "$source"
+  tmux swap-pane -s "$source" -t "$pane" || exit 0
+  set_status "$source" "$prev" "$total"
+}
+
+kill_tab() {
+  group=$(pane_group "$pane")
+  if [ -z "$group" ]; then
+    tmux kill-pane -t "$pane"
+    exit 0
+  fi
+
+  tabs=$(tab_session "$group")
+  if ! tmux has-session -t "$tabs:" 2>/dev/null; then
+    clear_group "$pane"
+    tmux kill-pane -t "$pane"
+    exit 0
+  fi
+
+  total=$(total_tabs "$tabs")
+  index=$(current_index "$pane")
+  next_total=$((total - 1))
+
+  if [ "$total" -gt 1 ]; then
+    if [ "$index" -gt 1 ]; then
+      prev=$((index - 1))
+    else
+      prev=$total
+    fi
+
+    source=$(find_pane_by_index "$group" "$prev")
+    if [ -n "$source" ]; then
+      match_size "$source"
+      tmux swap-pane -s "$source" -t "$pane" || exit 0
+    fi
+  fi
+
+  tmux kill-pane -t "$pane"
+
+  renumber_after "$group" "$index" "$next_total"
+}
+
+pane_died() {
+  session=$(tmux display-message -p -t "$pane" '#{session_name}' 2>/dev/null || true)
+  case "$session" in
+    __pane-tabs_*)
+      group=${session#__pane-tabs_}
+      index=$(current_index "$pane")
+      tmux kill-pane -t "$pane" 2>/dev/null || true
+      visible=$(group_panes "$group" | head -n 1)
+      [ -n "$visible" ] || exit 0
+
+      tabs=$(tab_session "$group")
+      if tmux has-session -t "$tabs:" 2>/dev/null; then
+        renumber_after "$group" "$index" "$(total_tabs "$tabs")"
+      else
+        clear_group "$visible"
+      fi
+      ;;
+    *)
+      kill_tab
+      ;;
+  esac
+}
+
+cleanup() {
+  tmux list-panes -a -F '#{pane_id} #{session_name} #{@pane_tabs_group}' |
+    while IFS=' ' read -r pane session group; do
+      case "$session" in
+        __pane-tabs_*) continue ;;
+      esac
+
+      [ -n "$group" ] || continue
+      tabs=$(tab_session "$group")
+      if ! tmux has-session -t "$tabs:" 2>/dev/null; then
+        clear_group "$pane"
+        continue
+      fi
+
+      total=$(total_tabs "$tabs")
+      if [ "$total" -gt 1 ]; then
+        index=$(current_index "$pane")
+        [ "$index" -gt "$total" ] && index=$total
+        set_status "$pane" "$index" "$total"
+      else
+        clear_group "$pane"
+      fi
+    done
+}
+
+case "$action" in
+  add) add_tab ;;
+  next) next_tab ;;
+  previous) previous_tab ;;
+  kill) kill_tab ;;
+  died) pane_died ;;
+  cleanup) cleanup ;;
+esac

@@ -46,7 +46,33 @@ bindkey "\e[B" down-line-or-search
 local WORDCHARS=${WORDCHARS//\//}
 
 alias clip="base64 | tr -d '\n' | awk '{printf \"\033Ptmux;\033\033]52;c;%s\033\\\\\", \$0}'"
-alias py="uv run --python 3.14 python"
+alias py="uv run --python 3.12 python"
+codex() {
+    local dir=$(pwd)
+    local override
+    local q='"'
+    printf -v override 'projects={"%s"={trust_level="trusted"}}' "${dir//$q/\"}"
+    nix shell nixpkgs#bun --command bunx -y @openai/codex \
+        -c "$override" \
+        "$@"
+}
+wscodex() {
+    local ws=$1
+    shift
+    local ws_root=$(jj root 2>/dev/null)
+    local repo_root=$ws_root
+    if [[ -f "$ws_root/.jj/repo" ]]; then
+        # In a workspace: follow .jj/repo pointer to find the actual repo root.
+        repo_root=$(cd "$ws_root/.jj" && cd "$(<repo)" && pwd)
+        repo_root=${repo_root:h:h}
+    fi
+    local dest="$repo_root/.workspace/$ws"
+    mkdir -p "$repo_root/.workspace"
+    local sock="$PWD/.nvim.sock"
+    jj workspace-add "$dest" && cd "$dest" || return
+    [[ -e "$sock" && ! -e .nvim.sock ]] && ln -s "$sock" .nvim.sock
+    codex "$@"
+}
 
 stty start ""
 stty stop ""
@@ -98,6 +124,23 @@ if [[ -f ~/.nix-profile/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]]; th
 fi
 if [[ -f ~/.nix-profile/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
     source ~/.nix-profile/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+fi
+if [[ -n $TMUX ]]; then
+    _tmux_set_worktree_name() {
+        local fallback=${${SHELL##*/}:-zsh}
+        local -a worktrees=(
+            ${(M)${(f)"$(git -C "$PWD" worktree list --porcelain 2>/dev/null)"}:#worktree *}
+        )
+        local -a workspaces=(
+            ${(f)"$(jj workspace list --ignore-working-copy --no-pager -T 'name ++ "\n"' 2>/dev/null)"}
+        )
+        (( ${#worktrees} > 1 || ${#workspaces} > 1 )) && {
+            tmux rename-window -t "$TMUX_PANE" "${PWD:t}"
+            return
+        }
+        tmux rename-window -t "$TMUX_PANE" "$fallback"
+    }
+    add-zsh-hook precmd _tmux_set_worktree_name
 fi
 if command -v fzf-share &> /dev/null; then
     fzf_keys=$(fzf-share)/key-bindings.zsh

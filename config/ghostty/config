@@ -16,6 +16,10 @@ keybind = alt+enter=toggle_fullscreen
 keybind = ctrl+alt+n=new_window
 keybind = ctrl+shift+n=text:\x01n
 keybind = ctrl+shift+p=text:\x01p
+keybind = ctrl+shift+t=text:\x01\x14
+keybind = ctrl+shift+w=text:\x01x
+keybind = ctrl+shift+left=text:\x01P
+keybind = ctrl+shift+right=text:\x01N
 keybind = ctrl+shift+j=text:\x01(
 keybind = ctrl+shift+k=text:\x01)
 keybind = alt+h=text:\x01h

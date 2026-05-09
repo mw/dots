@@ -1,0 +1,46 @@
+#!/bin/sh
+
+sessions() {
+  tmux list-sessions -F '#{session_name}' | grep -v '^__pane-tabs_'
+}
+
+current=$(tmux display-message -p '#S')
+
+case "$1" in
+  next)
+    target=$(sessions | gawk -v c="$current" '
+      NR == 1 { first = $0 }
+      $0 == c { pick = 1; next }
+      pick && !target { target = $0 }
+      END { print (target ? target : first) }
+    ')
+    [ -n "$target" ] && tmux switch-client -t "$target"
+    ;;
+
+  previous)
+    target=$(sessions | gawk -v c="$current" '
+      $0 == c { target = prev; next }
+      { prev = $0 }
+      END { print (target ? target : prev) }
+    ')
+    [ -n "$target" ] && tmux switch-client -t "$target"
+    ;;
+
+  pick)
+    {
+      tmux list-sessions -F '#{session_last_attached} #{session_name}' |
+        sed 's/^ /0 /' |
+        sort -nr |
+        gawk -v current="$current" '
+          $2 != current && $2 !~ /^__pane-tabs_/ { print $2 }
+        '
+      echo "$current"
+    } |
+      sed '/^$/d' |
+      fzf \
+        --preview-window '70%' \
+        --reverse \
+        --preview 'tmux capture-pane -ept {}' \
+        --bind 'enter:execute(tmux switch-client -t {})+accept'
+    ;;
+esac
