@@ -938,7 +938,6 @@ local options = {
     report = 0,
     sessionoptions = "buffers",
     shortmess = "filnxtToOFc",
-    showbreak = "→",
     showcmd = false,
     showmatch = true,
     showmode = false,
