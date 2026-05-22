@@ -8,6 +8,8 @@ end
 
 -- maximize tmux pane, useful for viewing diffs
 local function set_tmux_zoom(should_zoom)
+    local columns = vim.o.columns
+    local lines = vim.o.lines
     if not vim.env.TMUX_PANE then
         return
     end
@@ -29,6 +31,9 @@ local function set_tmux_zoom(should_zoom)
         "-t",
         vim.env.TMUX_PANE,
     })
+    vim.wait(500, function()
+        return vim.o.columns ~= columns or vim.o.lines ~= lines
+    end, 10)
 end
 
 -- plugin configuration
@@ -45,6 +50,9 @@ local plugins = {
             require("tokyonight").setup({
                 style = "storm",
                 lualine_bold = false,
+                on_highlights = function(hl, c)
+                    hl.QuickFixLineNr = { fg = c.purple }
+                end,
             })
             vim.cmd("colorscheme tokyonight")
         end,
@@ -56,8 +64,10 @@ local plugins = {
         end,
     },
     {
-        "https://github.com/sindrets/diffview.nvim",
+        "https://github.com/dlyongemallo/diffview-plus.nvim",
         function()
+            local states = {}
+
             local function jump_change(key)
                 vim.cmd.normal({
                     args = { ("%d%s"):format(vim.v.count1, key) },
@@ -65,25 +75,68 @@ local plugins = {
                 })
             end
 
-            local return_panes = {}
+            local function delete_buffer(path)
+                if not path then
+                    return
+                end
+                local bufnr = vim.fn.bufnr(path)
+                if bufnr ~= -1 then
+                    pcall(vim.api.nvim_buf_delete, bufnr, { force = true })
+                end
+            end
+
+            local function open_diffview(state)
+                vim.g.jj_diffview_state = state
+                set_tmux_zoom(true)
+                local ok, err = pcall(function()
+                    if state.kind == "dirs" then
+                        require("diffview").dir_diff(state.args)
+                    elseif state.kind == "open" then
+                        require("diffview").open(state.args)
+                    elseif state.kind == "merge" then
+                        require("diffview").merge_files(state.args)
+                    else
+                        error(
+                            "Unknown jj diffview kind: " .. tostring(state.kind)
+                        )
+                    end
+                end)
+                if not ok then
+                    vim.g.jj_diffview_state = nil
+                    set_tmux_zoom(false)
+                    delete_buffer(state.wait_path)
+                    error(err)
+                end
+                return "ok"
+            end
+
+            _G.jj_diffview_edit = function(opts)
+                return open_diffview(opts)
+            end
+
             require("diffview").setup({
+                enhanced_diff_hl = true,
+                clean_up_buffers = true,
+                use_icons = true,
+                preferred_adapter = "jj",
+                view = {
+                    default = { layout = "diff2_horizontal" },
+                    merge_tool = { layout = "diff3_vertical" },
+                },
+                file_panel = {
+                    listing_style = "tree",
+                    win_config = { position = "left", width = 35 },
+                },
                 hooks = {
                     view_opened = function(view)
-                        return_panes[view] = vim.g.diffview_return_pane
-                        vim.g.diffview_return_pane = nil
+                        states[view] = vim.g.jj_diffview_state or {}
+                        vim.g.jj_diffview_state = nil
                     end,
                     view_closed = function(view)
+                        local state = states[view] or {}
+                        states[view] = nil
                         set_tmux_zoom(false)
-                        local pane = return_panes[view]
-                        return_panes[view] = nil
-                        if pane then
-                            vim.fn.system({
-                                "tmux",
-                                "select-pane",
-                                "-t",
-                                pane,
-                            })
-                        end
+                        delete_buffer(state.wait_path)
                     end,
                     diff_buf_read = function(bufnr)
                         map("n", "(", function()
@@ -98,6 +151,9 @@ local plugins = {
                             buffer = bufnr,
                             desc = "Next change",
                         })
+                    end,
+                    view_post_layout = function()
+                        vim.cmd("3wincmd l")
                     end,
                 },
             })
@@ -442,29 +498,7 @@ local plugins = {
                     virt_text_pos = "eol",
                 },
             })
-            vim.api.nvim_create_user_command("GitDiffCommit", function(opts)
-                set_tmux_zoom(true)
-                local args = { opts.fargs[1] .. "^!" }
-                for i = 2, #opts.fargs do
-                    local arg = opts.fargs[i]
-                    local pane = arg:match("^-return%-pane=(.+)$")
-                    if pane then
-                        vim.g.diffview_return_pane = pane
-                    else
-                        args[#args + 1] = arg
-                    end
-                end
-                local ok, err = pcall(vim.cmd, {
-                    cmd = "DiffviewOpen",
-                    args = args,
-                })
-                if not ok then
-                    vim.g.diffview_return_pane = nil
-                    error(err)
-                end
-            end, {
-                nargs = "+",
-            })
+
             map("n", "<leader>B", "<cmd>Gitsigns blame<cr>")
             map("n", "<M-b>", "<cmd>Gitsigns toggle_current_line_blame<cr>")
             map("n", "R", "<cmd>Gitsigns setqflist<cr>")
@@ -769,7 +803,8 @@ local plugins = {
                 picker:close()
                 if item and item.commit then
                     vim.schedule(function()
-                        vim.cmd.GitDiffCommit(item.commit)
+                        set_tmux_zoom(true)
+                        vim.cmd.DiffviewOpen(item.commit .. "^!")
                     end)
                 end
             end

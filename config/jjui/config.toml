@@ -19,31 +19,22 @@ if empty == "true" then
     return
 end
 
+local args
 local file = jjui.context.file()
-if file then
-    jjui.jj_interactive({ "diffview", rev, "--", file })
+if jjui.jj({ "log", "-r", rev, "-T", "immutable", "--no-graph" }) == "true" then
+    args = { "diff", "-r", rev, "--tool", "diffview" }
+elseif jjui.jj({ "log", "-r", rev, "-T", "conflict", "--no-graph" }) == "true" then
+    args = { "resolve", "-r", rev, "--tool", "diffview" }
 else
-    jjui.jj_interactive({ "diffview", rev })
+    args = { "diffedit", "-r", rev, "--tool", "diffview" }
 end
+
+if file then
+    args[#args + 1] = "--"
+    args[#args + 1] = file
+end
+jjui.jj_interactive(args)
 '''
-
-[[bindings]]
-key = "d"
-action = "diffview"
-scope = "revisions"
-desc = "diffview"
-
-[[bindings]]
-key = "d"
-action = "diffview"
-scope = "revisions.details"
-desc = "diffview"
-
-[[bindings]]
-key = "d"
-action = "diffview"
-scope = "revisions.evolog"
-desc = "diffview"
 
 [[actions]]
 name = "forget_workspace"
@@ -77,23 +68,44 @@ jjui.flash({ text = "Workspace forgotten and deleted" })
 jjui.revisions.refresh({ keep_selections = false })
 '''
 
-[[bindings]]
-key = "F"
-action = "forget_workspace"
-scope = "revisions"
-desc = "forget workspace"
+[[actions]]
+name = "copy_change_id"
+lua = '''
+local rev = jjui.context.change_id()
+if not rev then
+    rev = jjui.context.commit_id()
+end
+if not rev then
+    jjui.flash({ text = "No revision selected", error = true })
+    return
+end
 
-[[bindings]]
-key = "F"
-action = "forget_workspace"
-scope = "revisions.details"
-desc = "forget workspace"
-
-[[bindings]]
-key = "F"
-action = "forget_workspace"
-scope = "revisions.evolog"
-desc = "forget workspace"
+local id = jjui.jj({
+    "log",
+    "-r",
+    rev,
+    "-T",
+    "change_id.shortest(32)",
+    "--no-graph",
+})
+local encoded = jjui.jj({
+    "util",
+    "exec",
+    "--",
+    "sh",
+    "-c",
+    'printf %s "$1" | base64 -w0',
+    "",
+    id,
+})
+if encoded == "" then
+    jjui.flash({ text = "Could not encode change ID", error = true })
+    return
+end
+io.write(string.char(27) .. "]52;c;" .. encoded .. string.char(7))
+io.flush()
+jjui.flash({ text = "Copied change ID " .. id })
+'''
 
 [[actions]]
 name = "refresh"
@@ -105,27 +117,85 @@ local output = jjui.jj({
     "-T",
     'name ++ "\\t" ++ root ++ "\\n"',
 })
-local skipped = {}
 for line in output:gmatch("[^\n]+") do
     local name, root = line:match("^([^\t]+)\t(.+)$")
     if name and root then
-        local ok =
-            pcall(jjui.jj, { "-R", root, "util", "snapshot", "--no-pager" })
-        if not ok then
-            table.insert(skipped, name)
-        end
+        jjui.jj({ "-R", root, "util", "snapshot", "--no-pager" })
     end
-end
-if #skipped > 0 then
-    jjui.flash({
-        text = "Skipped missing workspaces: " .. table.concat(skipped, ", "),
-    })
 end
 jjui.revisions.refresh({ keep_selections = true })
 '''
+
+[[actions]]
+name = "up"
+lua = '''
+jjui.jj_async({ "git", "fetch" })
+jjui.jj_async({ "rebase", "-s", "roots(trunk()..@)", "-d", "trunk()" })
+jjui.revisions.refresh({ keep_selections = true })
+'''
+
+[[bindings]]
+key = "d"
+action = "diffview"
+scope = "revisions"
+desc = "edit diff"
+
+[[bindings]]
+key = "C"
+action = "copy_change_id"
+scope = "revisions"
+desc = "copy change ID"
+
+[[bindings]]
+key = "F"
+action = "forget_workspace"
+scope = "revisions"
+desc = "forget workspace"
 
 [[bindings]]
 key = "ctrl+r"
 action = "refresh"
 scope = "revisions"
 desc = "refresh (snapshot all workspaces)"
+
+[[bindings]]
+key = "G"
+action = "up"
+scope = "revisions"
+desc = "fetch & rebase onto trunk"
+
+[[bindings]]
+key = "d"
+action = "diffview"
+scope = "revisions.details"
+desc = "edit diff"
+
+[[bindings]]
+key = "C"
+action = "copy_change_id"
+scope = "revisions.details"
+desc = "copy change ID"
+
+[[bindings]]
+key = "F"
+action = "forget_workspace"
+scope = "revisions.details"
+desc = "forget workspace"
+
+[[bindings]]
+key = "d"
+action = "diffview"
+scope = "revisions.evolog"
+desc = "edit diff"
+
+[[bindings]]
+key = "C"
+action = "copy_change_id"
+scope = "revisions.evolog"
+desc = "copy change ID"
+
+[[bindings]]
+key = "F"
+action = "forget_workspace"
+scope = "revisions.evolog"
+desc = "forget workspace"

@@ -1,0 +1,47 @@
+#!/bin/sh
+set -eu
+
+quote() {
+    printf "'%s'" "$(printf '%s' "$1" | sed "s/'/''/g")"
+}
+
+absolute() {
+    case "$1" in
+        /*) printf '%s' "$1" ;;
+        *) printf '%s/%s' "$PWD" "$1" ;;
+    esac
+}
+
+kind=$1
+shift
+root=${JJ_WORKSPACE_ROOT:-$(jj root)}
+wait=$(mktemp "${TMPDIR:-/tmp}/jj-diffview.XXXXXX")
+pane=${TMUX_PANE:-}
+trap 'rm -f "$wait"' EXIT
+
+case "$kind" in
+    dirs)
+        opts=$(printf "{'kind': 'dirs', 'args': [%s, %s], 'wait_path': %s}" \
+            "$(quote "$(absolute "$1")")" \
+            "$(quote "$(absolute "$2")")" \
+            "$(quote "$wait")")
+        ;;
+    merge)
+        opts=$(printf \
+            "{'kind': 'merge', 'args': [%s, %s, %s], 'wait_path': %s}" \
+            "$(quote "$(absolute "$1")")" \
+            "$(quote "$(absolute "$2")")" \
+            "$(quote "$(absolute "$3")")" \
+            "$(quote "$wait")")
+        ;;
+    *)
+        echo "unknown diffview kind: $kind" >&2
+        exit 2
+        ;;
+esac
+
+nvr --nostart --servername "$root/.nvim.sock" \
+    --remote-wait-silent "+call v:lua.jj_diffview_edit($opts)" "$wait"
+if [ -n "$pane" ]; then
+    tmux select-pane -t "$pane"
+fi

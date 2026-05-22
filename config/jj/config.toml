@@ -6,7 +6,9 @@ email = "git@mw.mozmail.com"
 
 [ui]
 default-command = "jjui"
+diff-editor = "diffview"
 diff-formatter = "delta"
+merge-editor = "diffview"
 show-cryptographic-signatures = true
 
 [merge-tools.delta]
@@ -21,50 +23,33 @@ diff-args = [
   "$right",
 ]
 
-[aliases]
-# Open diff in an existing neovim instance.
-# Fall back to `jj show` if the server is not running.
-diffview = [
-  "util",
-  "exec",
-  "--",
-  "sh",
+[merge-tools.diffview]
+program = "sh"
+diff-args = [
   "-c",
-  '''
-set -eu
-rev=${1:-@}
-[ "$#" -gt 0 ] && shift
-
-commit=$(
-    jj --ignore-working-copy log --no-graph -r "$rev" -T 'commit_id'
-)
-
-quote() {
-    printf "'%s'" "$(printf '%s' "$1" | sed "s/'/''/g")"
-}
-
-root=$(quote "$JJ_WORKSPACE_ROOT")
-expr="execute('GitDiffCommit ' . $(quote "$commit")"
-expr="$expr . ' -C' . fnameescape($root)"
-
-if [ -n "${TMUX_PANE:-}" ]; then
-    expr="$expr . ' -return-pane=' . $(quote "$TMUX_PANE")"
-fi
-
-for arg do
-    expr="$expr . ' ' . fnameescape($(quote "$arg"))"
-done
-
-server="$PWD/.nvim.sock"
-if [ -e "$server" ]; then
-    exec nvr --nostart --servername "$server" --remote-expr "$expr)"
-else
-    exec jj show "$commit" -- "$@"
-fi
-''',
+  'exec "$HOME/dots/config/jj/diffview" dirs "$1" "$2"',
   "",
+  "$left",
+  "$right",
 ]
+edit-args = [
+  "-c",
+  'exec "$HOME/dots/config/jj/diffview" dirs "$1" "$2"',
+  "",
+  "$left",
+  "$right",
+]
+merge-args = [
+  "-c",
+  'exec "$HOME/dots/config/jj/diffview" merge "$1" "$2" "$3"',
+  "",
+  "$output",
+  "$left",
+  "$right",
+]
+merge-tool-edits-conflict-markers = true
 
+[aliases]
 jjui = ["util", "exec", "--", "jjui"]
 
 # temporary hack until jj adds colocated workspaces
