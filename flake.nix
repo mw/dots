@@ -2,7 +2,7 @@
   description = "basepkgs";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "https://flakehub.com/f/DeterminateSystems/nixpkgs-weekly/0.1";
   };
 
   outputs = { self, nixpkgs }: {
@@ -54,7 +54,6 @@
               ripgrep
               rustup
               sqlite-interactive
-              starship
               tailscale
               tmux
               tree-sitter

@@ -1,12 +1,18 @@
 autoload -Uz zmv
 autoload -Uz vcs_info
-autoload -Uz compinit && compinit
+autoload -Uz compinit
 autoload -Uz colors && colors
 autoload -Uz edit-command-line
 
 zle -N edit-command-line
 
 set -o emacs
+
+if [[ -n ~/.zcompdump(#qNmh-24) ]]; then
+  compinit -C
+else
+  compinit
+fi
 
 setopt c_bases
 setopt rmstarsilent
@@ -56,23 +62,6 @@ codex() {
         -c "$override" \
         "$@"
 }
-wscodex() {
-    local ws=$1
-    shift
-    local ws_root=$(jj root 2>/dev/null)
-    local repo_root=$ws_root
-    if [[ -f "$ws_root/.jj/repo" ]]; then
-        # In a workspace: follow .jj/repo pointer to find the actual repo root.
-        repo_root=$(cd "$ws_root/.jj" && cd "$(<repo)" && pwd)
-        repo_root=${repo_root:h:h}
-    fi
-    local dest="$repo_root/.workspace/$ws"
-    mkdir -p "$repo_root/.workspace"
-    local sock="$PWD/.nvim.sock"
-    jj workspace-add "$dest" && cd "$dest" || return
-    [[ -e "$sock" && ! -e .nvim.sock ]] && ln -s "$sock" .nvim.sock
-    codex "$@"
-}
 
 stty start ""
 stty stop ""
@@ -106,9 +95,69 @@ fi
 if command -v zoxide &> /dev/null; then
     eval "$(zoxide init zsh)"
 fi
-if command -v starship &> /dev/null; then
-    eval "$(starship init zsh)"
-fi
+autoload -Uz add-zsh-hook
+zmodload zsh/datetime
+
+typeset -gF _prompt_cmd_start=0
+
+prompt_preexec() {
+    _prompt_cmd_start=$EPOCHREALTIME
+}
+
+_prompt_jj_segment() {
+    jj --ignore-working-copy root >/dev/null 2>&1 || return 1
+    jj log --revisions @ --no-graph --ignore-working-copy \
+        --color always --limit 1 --template '
+      separate(" ",
+        change_id.shortest(4),
+        bookmarks,
+        concat(
+          if(conflict, "󰞇 "),
+          if(divergent, ""),
+          if(hidden, "󰘓 "),
+          if(immutable, ""),
+          if(empty, "ø ")
+        ),
+      )
+    ' 2>/dev/null
+}
+
+prompt_precmd() {
+    local exit_code=$?
+
+    local vcs=""
+    local jj_out=$(_prompt_jj_segment)
+    [[ -n $jj_out ]] && vcs=" $jj_out"
+
+    local duration=""
+    if (( _prompt_cmd_start > 0 )); then
+        local elapsed=$(( EPOCHREALTIME - _prompt_cmd_start ))
+        _prompt_cmd_start=0
+        if (( elapsed >= 2.0 )); then
+            local secs=$(( elapsed + 0.5 ))
+            secs=${secs%%.*}
+            duration=" %F{yellow}took ${secs}s%f"
+        fi
+    fi
+
+    local jobs_str=""
+    local jn=$(jobs -l 2>/dev/null | wc -l)
+    if (( jn > 0 )); then
+        jobs_str="%F{blue}✦${jn}%f "
+    fi
+
+    local status_str=""
+    (( exit_code != 0 )) && status_str="%F{red}✗%f "
+
+    local p1=$'\n%F{cyan}%~%f'"${vcs}${duration}"
+    local p2=$'\n'"${jobs_str}${status_str}%F{green}❯%f "
+    PROMPT="${p1}${p2}"
+    PS2="%F{green}❯%f "
+}
+
+add-zsh-hook preexec prompt_preexec
+add-zsh-hook precmd prompt_precmd
+
 if command -v direnv &> /dev/null; then
     eval "$(direnv hook zsh)"
 fi
@@ -126,21 +175,11 @@ if [[ -f ~/.nix-profile/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zs
     source ~/.nix-profile/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 fi
 if [[ -n $TMUX ]]; then
-    _tmux_set_worktree_name() {
-        local fallback=${${SHELL##*/}:-zsh}
-        local -a worktrees=(
-            ${(M)${(f)"$(git -C "$PWD" worktree list --porcelain 2>/dev/null)"}:#worktree *}
-        )
-        local -a workspaces=(
-            ${(f)"$(jj workspace list --ignore-working-copy --no-pager -T 'name ++ "\n"' 2>/dev/null)"}
-        )
-        (( ${#worktrees} > 1 || ${#workspaces} > 1 )) && {
-            tmux rename-window -t "$TMUX_PANE" "${PWD:t}"
-            return
-        }
-        tmux rename-window -t "$TMUX_PANE" "$fallback"
+    _tmux_set_window_name() {
+        local name=${${PWD/#$HOME/'~'}:t}
+        tmux rename-window -t "$TMUX_PANE" "$name"
     }
-    add-zsh-hook precmd _tmux_set_worktree_name
+    add-zsh-hook precmd _tmux_set_window_name
 fi
 if command -v fzf-share &> /dev/null; then
     fzf_keys=$(fzf-share)/key-bindings.zsh
