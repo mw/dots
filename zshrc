@@ -52,7 +52,7 @@ codex() {
     local override
     local q='"'
     printf -v override 'projects={"%s"={trust_level="trusted"}}' "${dir//$q/\"}"
-    nix shell nixpkgs#bun --command bunx -y @openai/codex \
+    nix shell nixpkgs#pnpm --command pnpm dlx @openai/codex \
         -c "$override" \
         "$@"
 }

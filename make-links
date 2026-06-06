@@ -6,7 +6,9 @@ config/jj/config.toml
 config/jjui
 config/nix
 config/nvim
+config/pnpm
 config/starship.toml
+config/uv
 gitconfig
 gitignore
 tmux.conf

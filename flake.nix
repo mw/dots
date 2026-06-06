@@ -48,6 +48,7 @@
               neovim-remote
               nix-direnv
               nmap
+              pnpm
               rclone
               restic
               ripgrep
