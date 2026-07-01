@@ -39,6 +39,7 @@ export LC_ALL=en_US.UTF-8
 export BAT_STYLE=plain
 export FZF_DEFAULT_COMMAND='rg --files'
 export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#506080"
+export UV_FROZEN=1
 
 bindkey "^x^e" edit-command-line
 
