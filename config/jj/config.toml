@@ -6,6 +6,7 @@ email = "git@mw.mozmail.com"
 
 [ui]
 default-command = "jjui"
+diff-instructions = false
 diff-editor = "diffview"
 diff-formatter = "delta"
 merge-editor = "diffview"

@@ -86,6 +86,7 @@ local plugins = {
             end
 
             local function open_diffview(state)
+                vim.cmd.cclose()
                 vim.g.jj_diffview_state = state
                 set_tmux_zoom(true)
                 local ok, err = pcall(function()
@@ -272,13 +273,13 @@ local plugins = {
                     cmd = {
                         "nix",
                         "run",
-                        "nixpkgs#luajitPackages.lua-lsp",
-                    },
-                    format = {
-                        enable = true,
+                        "nixpkgs#lua-language-server",
                     },
                     settings = {
                         Lua = {
+                            format = {
+                                enable = true,
+                            },
                             runtime = {
                                 version = "LuaJIT",
                             },
@@ -305,6 +306,7 @@ local plugins = {
                         "nixpkgs#stylua",
                         "--",
                         "--lsp",
+                        "--search-parent-directories",
                     },
                 },
                 rust_analyzer = {

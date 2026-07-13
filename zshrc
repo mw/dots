@@ -50,18 +50,21 @@ HISTFILE=~/.history
 bindkey "\e[A" up-line-or-search
 bindkey "\e[B" down-line-or-search
 
-local WORDCHARS=${WORDCHARS//\//}
+local WORDCHARS=${WORDCHARS//[\/#]}
 
 alias clip="base64 | tr -d '\n' | awk '{printf \"\033Ptmux;\033\033]52;c;%s\033\\\\\", \$0}'"
 alias py="uv run --python 3.12 python"
+pi() {
+    pnpm dlx --config.ignore-scripts=true \
+        --config.minimum-release-age=2880 -y \
+        @earendil-works/pi-coding-agent "$@"
+}
 codex() {
     local dir=$(pwd)
     local override
     local q='"'
     printf -v override 'projects={"%s"={trust_level="trusted"}}' "${dir//$q/\"}"
-    nix shell nixpkgs#pnpm --command pnpm dlx @openai/codex \
-        -c "$override" \
-        "$@"
+    pnpm dlx -y @openai/codex -c "$override" "$@"
 }
 
 stty start ""
@@ -87,6 +90,7 @@ if command -v nix &> /dev/null; then
         nix profile install ${HOME}/dots#basepkgs
     fi
     export TERMINFO_DIRS=${HOME}/.nix-profile/share/terminfo
+    export MSB_PATH=$(command -v msb)
 else
     echo "nix not found"
 fi
