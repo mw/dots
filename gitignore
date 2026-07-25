@@ -7,6 +7,7 @@
 .DS_Store
 .clangd
 .codex
+.env
 .envrc
 .mypy_cache/
 .npm

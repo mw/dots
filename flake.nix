@@ -43,6 +43,17 @@
                   w: builtins.all (s: pkgs.lib.hasInfix s w.url) platform
                 ) package.wheels
               );
+              entitlements = pkgs.writeText "msb-entitlements.plist" ''
+                <?xml version="1.0" encoding="UTF-8"?>
+                <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+                  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                <plist version="1.0">
+                <dict>
+                  <key>com.apple.security.hypervisor</key>
+                  <true/>
+                </dict>
+                </plist>
+              '';
             in
             pkgs.stdenv.mkDerivation {
               pname = package.name;
@@ -60,6 +71,12 @@
                 patchelf \
                   --set-interpreter "$(cat ${pkgs.stdenv.cc}/nix-support/dynamic-linker)" \
                   --set-rpath ${pkgs.libcap_ng}/lib \
+                  $out/bin/msb
+              '';
+
+              postFixup = pkgs.lib.optionalString pkgs.stdenv.isDarwin ''
+                /usr/bin/codesign --force --sign - \
+                  --entitlements ${entitlements} \
                   $out/bin/msb
               '';
             };

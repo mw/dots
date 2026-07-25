@@ -6,6 +6,7 @@ import asyncio
 import base64
 import functools
 import hashlib
+import httpx
 import json
 import os
 import shlex
@@ -52,6 +53,9 @@ def _xattrs_supported(path: str) -> bool:
         return True
     except OSError:
         return False
+    except AttributeError:
+        # macOS
+        return True
 
 
 def _bind_mount(path: str, readonly: bool = False) -> MountConfig:
@@ -95,7 +99,7 @@ class CommandSchema(BaseModel):
 class Tool:
     schema: ToolSchema
 
-    async def handle(self, params: dict[str, Any], confirmed: bool) -> dict[str, Any]:
+    async def handle(self, params: dict[str, Any]) -> dict[str, Any]:
         raise NotImplementedError
 
 
@@ -174,9 +178,7 @@ class Search(Tool):
         },
     )
 
-    async def handle(self, params: dict[str, Any], confirmed: bool) -> dict[str, Any]:
-        import httpx
-
+    async def handle(self, params: dict[str, Any]) -> dict[str, Any]:
         key = os.environ.get("KAGI_API_KEY")
         if not key:
             raise RuntimeError("missing KAGI_API_KEY")
@@ -236,9 +238,7 @@ class Extract(Tool):
         },
     )
 
-    async def handle(self, params: dict[str, Any], confirmed: bool) -> dict[str, Any]:
-        import httpx
-
+    async def handle(self, params: dict[str, Any]) -> dict[str, Any]:
         key = os.environ.get("KAGI_API_KEY")
         if not key:
             raise RuntimeError("missing KAGI_API_KEY")
@@ -271,15 +271,14 @@ class Nvr(Tool):
             "Direct the user to file locations using neovim's "
             "quickfix list. Runs nvr on the host, outside the "
             "sandbox. Accepts a list of locations, each with a "
-            "relative file name, line number, and description. "
-            "Requires user approval before executing."
+            "relative file name, line number, and description."
         ),
         parameters={
             "type": "object",
             "properties": {
                 "locations": {
                     "type": "array",
-                    "description": ("List of file locations to direct the user to"),
+                    "description": "List of file locations to direct the user to",
                     "items": {
                         "type": "object",
                         "properties": {
@@ -308,17 +307,9 @@ class Nvr(Tool):
         },
     )
 
-    async def handle(self, params: dict[str, Any], confirmed: bool) -> dict[str, Any]:
+    async def handle(self, params: dict[str, Any]) -> dict[str, Any]:
         locations = params["locations"]
         summary = ", ".join(f"{loc['file']}:{loc['line']}" for loc in locations)
-
-        if not confirmed:
-            return {
-                "confirm": {
-                    "title": "nvr",
-                    "message": f"Direct user to {summary}?",
-                }
-            }
 
         socket = Path(CWD) / ".nvim.sock"
         if not socket.exists():
@@ -466,13 +457,7 @@ def manifest() -> dict[str, Any]:
 
 class SandboxManager:
     """
-    Manages the microsandbox lifecycle for a host working directory.
-
-    Each instance is tied to a ``cwd`` and derives a content-based image tag
-    from ``sandbox.nix`` plus a deterministic sandbox name from the two
-    combined.  All nix/microsandbox interactions (image build, create, start,
-    stop, prune, recreate) live here so the rest of the module can treat the
-    sandbox as an opaque async context.
+    Manages the sandbox for a host working directory.
     """
 
     def __init__(self, cwd: str = CWD) -> None:
@@ -480,13 +465,6 @@ class SandboxManager:
 
     @functools.cached_property
     def image_tag(self) -> str:
-        """
-        Content-based tag derived from ``sandbox.nix``.
-
-        Changes to the file produce a different tag, which triggers an image
-        rebuild and sandbox recreation.  Cached for the process lifetime
-        because the nix store path is immutable once built.
-        """
         store_path = subprocess.run(
             [
                 "nix",
@@ -512,14 +490,11 @@ class SandboxManager:
 
     @property
     def snapshot_name(self) -> str:
-        """Snapshot name derived from the image tag hash."""
         return f"snap-{self.image_tag.split(':')[1]}"
 
     def ensure_image(self) -> str:
         """
-        Build the nix image and load it into the microsandbox cache.
-
-        Returns the image tag, loading it first if not already cached.
+        Use nix to build the container image to load into microsandbox
         """
         tag = self.image_tag
 
@@ -563,7 +538,6 @@ class SandboxManager:
         """
         cutoff_ms = (time.time() - max_age_days * 86400) * 1000
 
-        # Find image references used by running sandboxes (system-wide).
         running: set[str] = set()
         for handle in await Sandbox.list():
             if handle.status != "running":
@@ -589,7 +563,6 @@ class SandboxManager:
 
     @staticmethod
     def dirs_from_config(cfg: dict[str, Any]) -> list[DirEntry]:
-        """Extract extra dirs from a sandbox's bind mounts under /src/."""
         dirs: list[DirEntry] = []
         for m in cfg.get("mounts", []):
             if m.get("type") != "Bind":
@@ -604,13 +577,11 @@ class SandboxManager:
         return dirs
 
     async def load_dirs(self) -> list[DirEntry]:
-        """Read extra dirs from existing sandbox configs for this cwd."""
         for handle in await Sandbox.list_with(labels={"pi.cwd": self.cwd}):
             return self.dirs_from_config(handle.config())
         return []
 
     async def find(self):
-        """Return a lightweight handle to the existing sandbox, or None."""
         try:
             return await Sandbox.get(self.name)
         except SandboxNotFoundError:
@@ -784,13 +755,12 @@ class ToolDispatch(Subcommand):
     async def handle(self, args: dict[str, Any]) -> dict[str, Any]:
         name = args["name"]
         params = args.get("params", {})
-        confirmed = args.get("confirmed", False)
 
         tool = _tool_registry.get(name)
         if tool is None:
             raise ValueError(f"Unknown tool: {name}")
 
-        return await tool.handle(params, confirmed)
+        return await tool.handle(params)
 
 
 @register_subcommand

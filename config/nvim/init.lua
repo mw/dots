@@ -257,14 +257,20 @@ local plugins = {
                 },
                 ruff = {
                     cmd = {
-                        "uvx",
+                        "uv",
+                        "run",
+                        "--with",
+                        "ruff",
                         "ruff",
                         "server",
                     },
                 },
                 ty = {
                     cmd = {
-                        "uvx",
+                        "uv",
+                        "run",
+                        "--with",
+                        "ty",
                         "ty",
                         "server",
                     },
@@ -327,7 +333,10 @@ local plugins = {
                 },
                 tombi = {
                     cmd = {
-                        "uvx",
+                        "uv",
+                        "run",
+                        "--with",
+                        "tombi",
                         "tombi",
                         "lsp",
                     },
@@ -1026,15 +1035,6 @@ map("i", "<s-tab>", function()
     return vim.fn.pumvisible() == 1 and "<c-p>" or "<s-tab>"
 end, { expr = true })
 
--- Map the tmux-sent F13 sequence for <c-i> to the default <c-i> behavior
-vim.keymap.set("n", "<F13>", function()
-    vim.api.nvim_feedkeys(
-        vim.api.nvim_replace_termcodes("<c-i>", true, false, true),
-        "n",
-        false
-    )
-end)
-
 map({ "v", "n" }, "<space>", ":nohl<cr>zz")
 
 map("n", "<leader>n", "<cmd>silent! set invnumber number?<cr>")
@@ -1070,67 +1070,3 @@ map("n", "<m-d>", function()
         vim.diagnostic.hide()
     end
 end)
-
--- tmux-send command
-local send_cmd = ""
-map("n", ",,", function()
-    vim.ui.input({ prompt = "tmux-send ❯ " }, function(result)
-        if result == nil then
-            return
-        end
-        send_cmd = result
-    end)
-    if send_cmd == "" then
-        vim.cmd([[
-            augroup tmuxsend
-            au!
-            augroup END
-        ]])
-    else
-        vim.cmd([[
-            augroup tmuxsend
-            au!
-            autocmd BufWritePost * lua tmux_send()
-            augroup END
-        ]])
-        tmux_send()
-    end
-end)
-
-function get_tmux_pane(pattern)
-    local result = vim.fn.system('tmux list-panes -F "#{pane_id} #{pane_tty}"')
-    local lines = vim.split(vim.trim(result), "\n")
-
-    local matches = {}
-    for _, line in ipairs(lines) do
-        local pane_id, tty = line:match("([%%0-9]+)%s+(.*)")
-        local ps_result = vim.fn.system("ps -t " .. tty .. " -o command=")
-        local cmd = vim.trim(ps_result)
-        if cmd:match(pattern) then
-            matches[pane_id] = #vim.split(cmd, "\n")
-        end
-    end
-
-    -- Return the first matching pane_id
-    for pane_id, count in pairs(matches) do
-        -- Match zsh pane only if count is 1 (not just the parent process)
-        if not string.find(pattern, "zsh") or count == 1 then
-            return pane_id
-        end
-    end
-    return nil
-end
-
-function tmux_send()
-    if send_cmd == "" then
-        return
-    end
-
-    local pane_id = get_tmux_pane("^-?zsh")
-    if not pane_id then
-        vim.notify("zsh pane not found", vim.log.levels.ERROR)
-        return
-    end
-
-    vim.fn.system({ "tmux", "send-keys", "-t", pane_id, send_cmd, "Enter" })
-end

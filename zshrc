@@ -52,7 +52,7 @@ bindkey "\e[B" down-line-or-search
 
 local WORDCHARS=${WORDCHARS//[\/#]}
 
-alias clip="base64 | tr -d '\n' | awk '{printf \"\033Ptmux;\033\033]52;c;%s\033\\\\\", \$0}'"
+alias clip='tmux load-buffer -w -'
 alias py="uv run --python 3.12 python"
 pi() {
     pnpm dlx --config.ignore-scripts=true \
@@ -64,7 +64,9 @@ codex() {
     local override
     local q='"'
     printf -v override 'projects={"%s"={trust_level="trusted"}}' "${dir//$q/\"}"
-    pnpm dlx -y @openai/codex -c "$override" "$@"
+    pnpm dlx --config.ignore-scripts=true \
+        --config.minimum-release-age=2880 -y \
+        @openai/codex -c "$override" "$@"
 }
 
 stty start ""
@@ -81,6 +83,8 @@ fi
 
 if [ -e ${HOME}/.nix-profile/etc/profile.d/nix.sh ]; then
     source ${HOME}/.nix-profile/etc/profile.d/nix.sh;
+elif [ -e /nix/var/nix/profiles/default/etc/profile.d/nix.sh ]; then
+    source /nix/var/nix/profiles/default/etc/profile.d/nix.sh;
 elif [ -e /etc/profile.d/nix.sh ]; then
     source /etc/profile.d/nix.sh;
 fi
@@ -166,10 +170,10 @@ add-zsh-hook precmd prompt_precmd
 if command -v direnv &> /dev/null; then
     eval "$(direnv hook zsh)"
 fi
-if command -v ssh-agent &> /dev/null && [[ -z ${SSH_AUTH_SOCK:-} ]]; then
+if command -v ssh-agent &> /dev/null; then
     export SSH_AUTH_SOCK="$HOME/.ssh/ssh-agent.sock"
-    if ! ssh-add -l >/dev/null 2>&1; then
-        [ -S "$SSH_AUTH_SOCK" ] && rm "$SSH_AUTH_SOCK"
+    if [[ ! -S "$SSH_AUTH_SOCK" ]] || ! ssh-add -l &> /dev/null; then
+        [[ -S "$SSH_AUTH_SOCK" ]] && rm -f "$SSH_AUTH_SOCK"
         eval "$(ssh-agent -a "$SSH_AUTH_SOCK")" >/dev/null
     fi
 fi

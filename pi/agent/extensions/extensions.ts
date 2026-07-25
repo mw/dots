@@ -1,8 +1,8 @@
 /**
  * Generic extension shim — delegates all tool/event logic to extensions.py.
  *
- * This file is written once and never modified. To add tools, change
- * behavior, or adjust event handling, edit extensions.py instead.
+ * This file is intended to be infrequently modified. Most extension logic
+ * belongs in extensions.py.
  */
 import { spawn } from "node:child_process";
 import path from "node:path";
@@ -24,10 +24,6 @@ const SCRIPT = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
   "extensions.py",
 );
-
-// ---------------------------------------------------------------------------
-// Persistent Python process (JSON-RPC over stdin/stdout)
-// ---------------------------------------------------------------------------
 
 interface Action {
   type: "set_active_tools" | "set_status" | "notify";
@@ -139,10 +135,6 @@ class PyProcess {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Shared utilities
-// ---------------------------------------------------------------------------
-
 function textResult(text: string) {
   return { content: [{ type: "text" as const, text }] };
 }
@@ -162,10 +154,6 @@ function executeActions(
     }
   }
 }
-
-// ---------------------------------------------------------------------------
-// Proxy operations (delegate to Python subprocess)
-// ---------------------------------------------------------------------------
 
 function proxyBashOps(py: PyProcess): BashOperations {
   return {
@@ -210,10 +198,6 @@ function proxyEditOps(py: PyProcess): EditOperations {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Extension entry point
-// ---------------------------------------------------------------------------
-
 export default async function (pi: ExtensionAPI) {
   const py = new PyProcess();
   const m = await py.requestJson("init");
@@ -237,7 +221,6 @@ export default async function (pi: ExtensionAPI) {
     });
   }
 
-  // --- Custom tools (search, extract, nvr) ---
   for (const tool of m.tools) {
     pi.registerTool({
       name: tool.name,
@@ -249,14 +232,7 @@ export default async function (pi: ExtensionAPI) {
       executionMode: tool.executionMode,
       async execute(_id, params, _signal, _onUpdate, ctx) {
         try {
-          let r = await py.requestJson("tool", { name: tool.name, params, confirmed: false });
-
-          if (r.confirm && ctx.hasUI) {
-            const ok = await ctx.ui.confirm(r.confirm.title, r.confirm.message);
-            if (!ok) return textResult(`${tool.name} cancelled by user`);
-            r = await py.requestJson("tool", { name: tool.name, params, confirmed: true });
-          }
-
+          const r = await py.requestJson("tool", { name: tool.name, params });
           executeActions(r.actions, pi, ctx);
           return textResult(r.text);
         } catch (e) {
@@ -266,12 +242,10 @@ export default async function (pi: ExtensionAPI) {
     });
   }
 
-  // --- Custom slash commands (dirs, ...) ---
   for (const cmd of m.commands) {
     pi.registerCommand(cmd.name, {
       description: cmd.description,
       handler: async (args, ctx) => {
-        // Don't recreate the sandbox out from under a running tool call.
         await ctx.waitForIdle();
         try {
           const r = await py.requestJson("command", { name: cmd.name, args });
@@ -285,13 +259,10 @@ export default async function (pi: ExtensionAPI) {
     });
   }
 
-  // --- Override built-in tools (bash, read, write, edit) ---
   overrideBuiltIn(createBashTool, () => proxyBashOps(py));
   overrideBuiltIn(createReadTool, () => proxyReadOps(py));
   overrideBuiltIn(createWriteTool, () => proxyWriteOps(py));
   overrideBuiltIn(createEditTool, () => proxyEditOps(py));
-
-  // --- Events ---
 
   pi.on("session_start", async (_event, ctx) => {
     const r = await py.requestJson("event", {
