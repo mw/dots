@@ -14,7 +14,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
 from typing import Any
@@ -364,9 +364,7 @@ class Jj(Tool):
             "properties": {
                 "args": {
                     "type": "array",
-                    "description": (
-                        'Arguments to pass to jj, e.g. ["status"]'
-                    ),
+                    "description": ('Arguments to pass to jj, e.g. ["status"]'),
                     "items": {"type": "string"},
                     "minItems": 1,
                 },
@@ -517,6 +515,10 @@ class SandboxManager:
 
     def __init__(self, cwd: str = CWD) -> None:
         self.cwd = cwd
+        # Serializes sandbox/snapshot lifecycle operations. Requests are
+        # handled concurrently, so without this two tasks can both observe a
+        # missing sandbox/snapshot and collide creating it.
+        self._lock = asyncio.Lock()
 
     @functools.cached_property
     def image_tag(self) -> str:
@@ -614,7 +616,9 @@ class SandboxManager:
                 continue
             if img.reference in running:
                 continue
-            await img.remove()
+            with suppress(MicrosandboxError):
+                # Best-effort: e.g. ImageInUseError from a concurrent session.
+                await img.remove()
 
     @staticmethod
     def dirs_from_config(cfg: dict[str, Any]) -> list[DirEntry]:
@@ -642,26 +646,38 @@ class SandboxManager:
         except SandboxNotFoundError:
             return None
 
-    async def ensure_snapshot(self) -> str:
+    async def ensure_snapshot(self, rebuild: bool = False) -> str:
+        """
+        Ensure a snapshot of the base image exists.
+
+        Caller must hold ``self._lock``. Snapshots are keyed by image tag,
+        so they are shared across sandboxes and concurrent pi processes.
+        """
         snap = self.snapshot_name
-        try:
-            await Snapshot.get(snap)
+        if rebuild:
+            with suppress(MicrosandboxError):
+                await Snapshot.remove(snap, force=True)
+        elif any(h.name == snap for h in await Snapshot.list()):
             return snap
-        except MicrosandboxError:
-            pass
 
         tag = self.ensure_image()
 
         base_name = f"base-{self.name}"
-        base = await Sandbox.create(
-            base_name,
-            image=Image.oci(tag, upper_size_mib=DISK_SIZE_MIB),
-            memory=MEMORY_MIB,
-            replace=True,
-        )
-        await base.stop()
-        await Snapshot.create(base_name, name=snap)
-        await Sandbox.remove(base_name)
+        try:
+            base = await Sandbox.create(
+                base_name,
+                image=Image.oci(tag, upper_size_mib=DISK_SIZE_MIB),
+                memory=MEMORY_MIB,
+                replace=True,
+            )
+            await base.stop()
+            # Snapshot.create stages the artifact and swaps it in atomically,
+            # so force=True is idempotent even when another pi process builds
+            # the same snapshot concurrently.
+            await Snapshot.create(base_name, name=snap, force=True)
+        finally:
+            with suppress(MicrosandboxError):
+                await Sandbox.remove(base_name)
         return snap
 
     async def get(self, extra_dirs: list[DirEntry] | None = None):
@@ -672,20 +688,43 @@ class SandboxManager:
         started or created the sandbox (and the caller should detach after
         use).
         """
-        handle = await self.find()
-        if handle:
-            if handle.status == "running":
-                return await handle.connect(), False
-            return await handle.start(detached=True), True
+        async with self._lock:
+            handle = await self.find()
+            if handle:
+                try:
+                    if handle.status == "running":
+                        return await handle.connect(), False
+                    return await handle.start(detached=True), True
+                except MicrosandboxError:
+                    # Stale or broken sandbox (e.g. removed or stopped by
+                    # another process); recreate it below.
+                    await self._remove_sandbox(self.name)
 
-        dirs = extra_dirs if extra_dirs is not None else await self.load_dirs()
-        volumes = {GUEST_WORKSPACE: _bind_mount(self.cwd)}
-        for d in dirs:
-            volumes[f"/src/{d.name}"] = _bind_mount(d.host_path, readonly=True)
+            dirs = extra_dirs if extra_dirs is not None else await self.load_dirs()
+            volumes = {GUEST_WORKSPACE: _bind_mount(self.cwd)}
+            for d in dirs:
+                volumes[f"/src/{d.name}"] = _bind_mount(d.host_path, readonly=True)
 
-        snap = await self.ensure_snapshot()
+            snap = await self.ensure_snapshot()
 
-        sb = await Sandbox.create(
+            try:
+                sb = await self._create(snap, volumes)
+            except MicrosandboxError:
+                # The snapshot may be stale or corrupt (e.g. left behind by
+                # an interrupted build or an msb upgrade); rebuild it once.
+                snap = await self.ensure_snapshot(rebuild=True)
+                sb = await self._create(snap, volumes)
+
+            # Remove stale sandboxes from previous image tags for this cwd.
+            for old in await Sandbox.list_with(labels={"pi.cwd": self.cwd}):
+                if old.name != self.name:
+                    await self._remove_sandbox(old.name, handle=old)
+
+            await self.prune_old_images()
+            return sb, True
+
+    async def _create(self, snap: str, volumes: dict[str, MountConfig]):
+        return await Sandbox.create(
             self.name,
             snapshot=snap,
             detached=True,
@@ -696,15 +735,14 @@ class SandboxManager:
             labels={"pi.cwd": self.cwd},
         )
 
-        # Remove stale sandboxes from previous image tags for this cwd.
-        for old in await Sandbox.list_with(labels={"pi.cwd": self.cwd}):
-            if old.name != self.name:
-                if old.status == "running":
-                    await old.kill()
-                await old.remove()
-
-        await self.prune_old_images()
-        return sb, True
+    @staticmethod
+    async def _remove_sandbox(name: str, handle=None) -> None:
+        with suppress(MicrosandboxError):
+            handle = handle or await Sandbox.get(name)
+            if handle.status == "running":
+                await handle.kill()
+        with suppress(MicrosandboxError):
+            await Sandbox.remove(name)
 
     @asynccontextmanager
     async def session(self):
@@ -718,14 +756,11 @@ class SandboxManager:
     async def shutdown(self) -> None:
         handle = await self.find()
         if handle and handle.status == "running":
-            await handle.request_stop()
+            with suppress(MicrosandboxError):
+                await handle.request_stop()
 
     async def recreate(self, extra_dirs: list[DirEntry] | None = None) -> None:
-        handle = await self.find()
-        if handle:
-            if handle.status == "running":
-                await handle.stop()
-            await Sandbox.remove(self.name)
+        await self._remove_sandbox(self.name)
 
         sb, owns = await self.get(extra_dirs=extra_dirs)
         if owns:
@@ -932,9 +967,10 @@ async def _handle_bash(req_id: int, args: dict[str, Any]) -> None:
                         code = event.code if event.code is not None else 1
                         break
         except TimeoutError:
-            await handle.kill()
-            async for _ in handle:  # drain until exited
-                pass
+            with suppress(MicrosandboxError):
+                await handle.kill()
+                async for _ in handle:  # drain until exited
+                    pass
             code = 124
         _write_line({"id": req_id, "done": True, "exitCode": code})
 
@@ -961,7 +997,10 @@ async def _handle_request(req_id: int, method: str, params: dict[str, Any]) -> N
 
 async def serve() -> None:
     loop = asyncio.get_running_loop()
-    reader = asyncio.StreamReader()
+    # Requests arrive as single JSON lines and can be large (write_file
+    # content, before_agent_start system prompts), well past the 64 KiB
+    # StreamReader default.
+    reader = asyncio.StreamReader(limit=64 * 1024 * 1024)
     protocol = asyncio.StreamReaderProtocol(reader)
     await loop.connect_read_pipe(lambda: protocol, sys.stdin.buffer)
 
