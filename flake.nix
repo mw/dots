@@ -108,10 +108,12 @@
               neovim-remote
               nix-direnv
               nmap
+              openssh
               pnpm
               rclone
               restic
               ripgrep
+              rsync
               rustup
               sqlite-interactive
               tailscale
