@@ -232,6 +232,15 @@ export default async function (pi: ExtensionAPI) {
       executionMode: tool.executionMode,
       async execute(_id, params, _signal, _onUpdate, ctx) {
         try {
+          if (tool.confirm) {
+            const confirmMsg = await py.requestJson("tool_confirm", {
+              name: tool.name,
+              params,
+            });
+            if (confirmMsg && !(await ctx.ui.confirm(tool.label, confirmMsg))) {
+              return textResult("Denied by user.");
+            }
+          }
           const r = await py.requestJson("tool", { name: tool.name, params });
           executeActions(r.actions, pi, ctx);
           return textResult(r.text);

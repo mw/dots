@@ -23,7 +23,6 @@ pkgs.dockerTools.buildLayeredImage {
     gnugrep
     gnused
     jq
-    jujutsu
     nix
     python3
     ripgrep

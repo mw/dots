@@ -87,6 +87,8 @@ class ToolSchema(BaseModel):
     description: str
     parameters: dict[str, Any]
     execution_mode: str = "parallel"
+    confirm: bool = False
+    """Whether tool calls must be gated on a tool_confirm check."""
 
 
 class CommandSchema(BaseModel):
@@ -98,6 +100,10 @@ class CommandSchema(BaseModel):
 
 class Tool:
     schema: ToolSchema
+
+    def confirm(self, params: dict[str, Any]) -> str | None:
+        """Return a confirmation message to prompt the user, or None."""
+        return None
 
     async def handle(self, params: dict[str, Any]) -> dict[str, Any]:
         raise NotImplementedError
@@ -340,6 +346,55 @@ class Nvr(Tool):
                 f"{result.stderr or result.stdout}",
             }
         return {"text": f"Directed user to {summary}"}
+
+
+@register_tool
+class Jj(Tool):
+    schema = ToolSchema(
+        name="jj",
+        label="Jujutsu",
+        description=(
+            "Run a jj (Jujutsu) command on the host, outside the "
+            "sandbox. Use this instead of running jj via bash, since "
+            "jj workspaces do not work inside the sandbox. The user "
+            "is asked to confirm `jj util` and `jj run` invocations."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "args": {
+                    "type": "array",
+                    "description": (
+                        'Arguments to pass to jj, e.g. ["status"]'
+                    ),
+                    "items": {"type": "string"},
+                    "minItems": 1,
+                },
+            },
+            "required": ["args"],
+        },
+        confirm=True,
+    )
+
+    def confirm(self, params: dict[str, Any]) -> str | None:
+        args = params["args"]
+        if args[0] in ("util", "run"):
+            return f"Allow running on the host: jj {shlex.join(args)}?"
+        return None
+
+    async def handle(self, params: dict[str, Any]) -> dict[str, Any]:
+        args = params["args"]
+        result = subprocess.run(
+            ["jj", *args],
+            capture_output=True,
+            text=True,
+            cwd=CWD,
+            timeout=120,
+        )
+        output = result.stdout + result.stderr
+        if result.returncode != 0:
+            output += f"\n(jj exited with code {result.returncode})"
+        return {"text": output.strip() or "(no output)"}
 
 
 # Commands
@@ -746,6 +801,17 @@ class EventDispatch(Subcommand):
             }
         else:
             raise ValueError(f"Unknown event: {name}")
+
+
+@register_subcommand
+class ToolConfirm(Subcommand):
+    name = "tool_confirm"
+
+    async def handle(self, args: dict[str, Any]) -> str | None:
+        tool = _tool_registry.get(args["name"])
+        if tool is None:
+            raise ValueError(f"Unknown tool: {args['name']}")
+        return tool.confirm(args.get("params", {}))
 
 
 @register_subcommand

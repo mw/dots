@@ -30,7 +30,6 @@ In `PATH`, you will find the following tools:
 
  * `rg` for searching file contents
  * `fd` for finding files (a `find` replacement)
- * `jj` for version control
  * `jq` for dealing with JSON
  * `uv` for Python package management, and for creating self-contained scripts
  * `pnpm` and `pnpx` for the NPM ecosystem
@@ -41,6 +40,8 @@ As mentioned, you have `uv` and should use it instead of legacy tools. You can
 use this for self-contained python scripts as well as programs configured for uv
 in pyproject.toml. Otherwise, you can use `uvx` to run programs from PyPI, but
 ensure you are using correct dependencies and versions.
+
+`jj` is used for version control (use the `jj` tool, not bash).
 
 ## Sandbox
 
