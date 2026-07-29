@@ -19,6 +19,7 @@ import {
   type ReadOperations,
   type WriteOperations,
 } from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
 
 const SCRIPT = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -230,6 +231,23 @@ export default async function (pi: ExtensionAPI) {
       promptGuidelines: tool.promptGuidelines,
       parameters: tool.parameters,
       executionMode: tool.executionMode,
+      // Show string arguments next to the tool name in the header.
+      renderCall(
+        args: Record<string, unknown>,
+        theme: Theme,
+        context: { lastComponent?: Text },
+      ) {
+        const text = context.lastComponent ?? new Text("", 0, 0);
+        const summary = Object.values(args)
+          .flat()
+          .filter((v) => typeof v === "string")
+          .join(" ");
+        text.setText(
+          theme.fg("toolTitle", theme.bold(tool.name)) +
+            (summary ? " " + theme.fg("muted", summary) : ""),
+        );
+        return text;
+      },
       async execute(_id, params, _signal, _onUpdate, ctx) {
         try {
           if (tool.confirm) {
