@@ -650,7 +650,7 @@ class SandboxManager:
         """
         Ensure a snapshot of the base image exists.
 
-        Caller must hold ``self._lock``. Snapshots are keyed by image tag,
+        Caller must hold `self._lock`. Snapshots are keyed by image tag,
         so they are shared across sandboxes and concurrent pi processes.
         """
         snap = self.snapshot_name
@@ -684,7 +684,7 @@ class SandboxManager:
         """
         Get or create the sandbox.
 
-        Returns ``(handle, owns)`` where ``owns`` is True when this call
+        Returns `(handle, owns)` where `owns` is True when this call
         started or created the sandbox (and the caller should detach after
         use).
         """
@@ -949,7 +949,11 @@ class DetectMime(Subcommand):
 async def _handle_bash(req_id: int, args: dict[str, Any]) -> None:
     timeout = args.get("timeout")
     async with sbm.session() as sb:
-        handle = await sb.shell_stream(args["command"], timeout=timeout, stdin=b"")
+        # shell_stream() runs commands via /bin/sh, which turns on POSIX mode,
+        # so invoke bash explicitly
+        handle = await sb.shell_stream(
+            "bash -s", timeout=timeout, stdin=args["command"].encode()
+        )
         code = 1
         try:
             # shell_stream() does not enforce the timeout itself (msb 0.6.6),

@@ -28,7 +28,7 @@ so on.
 
 In `PATH`, you will find the following tools:
 
- * `rg` for searching file contents
+ * `rg` for searching file contents (NB: flags differ from grep)
  * `fd` for finding files (a `find` replacement)
  * `jq` for dealing with JSON
  * `uv` for Python package management, and for creating self-contained scripts

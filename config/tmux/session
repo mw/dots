@@ -14,16 +14,16 @@ case "$1" in
       pick && !target { target = $0 }
       END { print (target ? target : first) }
     ')
-    [ -n "$target" ] && tmux switch-client -t "$target"
+    if [ -n "$target" ]; then tmux switch-client -t "$target"; fi
     ;;
 
   previous)
     target=$(sessions | gawk -v c="$current" '
-      $0 == c { target = prev; next }
+      $0 == c { target = prev }
       { prev = $0 }
       END { print (target ? target : prev) }
     ')
-    [ -n "$target" ] && tmux switch-client -t "$target"
+    if [ -n "$target" ]; then tmux switch-client -t "$target"; fi
     ;;
 
   pick)
