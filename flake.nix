@@ -84,7 +84,7 @@
           basepkgs = pkgs.buildEnv {
             name = "basepkgs";
             paths = with pkgs; [
-              age
+              age-plugin-yubikey
               b3sum
               bash
               bat
@@ -107,21 +107,21 @@
               ncurses5
               neovim
               neovim-remote
-              nix-direnv
               nmap
               openssh
               pnpm
               rclone
+              rage
               restic
               ripgrep
               rsync
               rustup
               sqlite-interactive
-              tailscale
               tmux
               tree-sitter
               unzip
               uv
+              yubikey-agent
               zoxide
               zsh
               self.packages.${system}.microsandbox

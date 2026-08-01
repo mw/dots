@@ -161,12 +161,23 @@ add-zsh-hook precmd prompt_precmd
 if command -v direnv &> /dev/null; then
     eval "$(direnv hook zsh)"
 fi
-if command -v ssh-agent &> /dev/null; then
-    export SSH_AUTH_SOCK="$HOME/.ssh/ssh-agent.sock"
-    if [[ ! -S "$SSH_AUTH_SOCK" ]] || ! ssh-add -l &> /dev/null; then
-        [[ -S "$SSH_AUTH_SOCK" ]] && rm -f "$SSH_AUTH_SOCK"
-        eval "$(ssh-agent -a "$SSH_AUTH_SOCK")" >/dev/null
+if command -v yubikey-agent &> /dev/null; then
+    export SSH_AUTH_SOCK="$HOME/.ssh/yubikey-agent.sock"
+    if ! [[ -S "$SSH_AUTH_SOCK" ]] || ! pgrep -qx yubikey-agent; then
+        yubikey-agent -l "$SSH_AUTH_SOCK" &> /dev/null &!
     fi
+fi
+
+if command -v pw &> /dev/null; then
+    # meta+p: pick a passage entry, insert its quoted name at the cursor
+    pw-insert() {
+        local picked
+        picked=$(command pw select) && LBUFFER+=${(q)picked}
+        zle reset-prompt
+    }
+
+    zle -N pw-insert
+    bindkey '^[p' pw-insert
 fi
 if [[ -f ~/.nix-profile/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
     source ~/.nix-profile/share/zsh-autosuggestions/zsh-autosuggestions.zsh

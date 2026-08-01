@@ -1,3 +1,6 @@
+[revisions]
+log_batching = false
+
 [ui.colors]
 "selected" = { bg = "#20354a" }
 

@@ -5,27 +5,31 @@
 import asyncio
 import base64
 import functools
+import gzip
 import hashlib
-import httpx
 import json
 import os
 import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
 import time
 from contextlib import asynccontextmanager, suppress
 from pathlib import Path
-
 from typing import Any
 
+import httpx
 from microsandbox import (
     Image,
+    ImageNotFoundError,
     MicrosandboxError,
     MountConfig,
     MountKind,
     Sandbox,
+    SandboxHandle,
     SandboxNotFoundError,
+    SandboxStatus,
     Snapshot,
     StatVirtualization,
 )
@@ -521,8 +525,8 @@ class SandboxManager:
         self._lock = asyncio.Lock()
 
     @functools.cached_property
-    def image_tag(self) -> str:
-        store_path = subprocess.run(
+    def image_path(self) -> str:
+        return subprocess.run(
             [
                 "nix",
                 "build",
@@ -536,7 +540,10 @@ class SandboxManager:
             capture_output=True,
             text=True,
         ).stdout.strip()
-        return f"pi-sandbox:{hashlib.sha256(store_path.encode()).hexdigest()[:12]}"
+
+    @property
+    def image_tag(self) -> str:
+        return f"pi-sandbox:{hashlib.sha256(self.image_path.encode()).hexdigest()[:12]}"
 
     @property
     def name(self) -> str:
@@ -549,80 +556,39 @@ class SandboxManager:
     def snapshot_name(self) -> str:
         return f"snap-{self.image_tag.split(':')[1]}"
 
-    def ensure_image(self) -> str:
-        """
-        Use nix to build the container image to load into microsandbox
-        """
+    async def ensure_image(self) -> str:
+        """Import the Nix image into the SDK's image cache if missing."""
         tag = self.image_tag
-
-        result = subprocess.run(
-            ["msb", "image", "inspect", tag],
-            capture_output=True,
-        )
-        if result.returncode == 0:
-            return tag
-
-        store_path = subprocess.run(
-            [
-                "nix",
-                "build",
-                "-f",
-                str(SANDBOX_NIX),
-                "--no-link",
-                "--print-out-paths",
-            ],
-            check=True,
-            cwd=SANDBOX_NIX.parent,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-
-        with subprocess.Popen(
-            ["gunzip", "-c", store_path], stdout=subprocess.PIPE
-        ) as gunzip:
-            subprocess.run(
-                ["msb", "load", "--tag", tag],
-                stdin=gunzip.stdout,
-                check=True,
-            )
+        try:
+            await Image.get(tag)
+        except ImageNotFoundError:
+            # Image.load accepts uncompressed archives; Nix produces a gzip tarball.
+            with (
+                gzip.open(self.image_path, "rb") as source,
+                tempfile.NamedTemporaryFile(suffix=".tar") as archive,
+            ):
+                shutil.copyfileobj(source, archive)
+                archive.flush()
+                await Image.load(archive.name, tag=tag)
         return tag
 
     @staticmethod
     async def prune_old_images(max_age_days: int = 7) -> None:
         """
-        Remove cached images not used by any running sandbox
+        Remove cached images not used by any sandbox
         and older than max_age_days.
         """
         cutoff_ms = (time.time() - max_age_days * 86400) * 1000
 
-        running: set[str] = set()
-        for handle in await SandboxManager.sandboxes():
-            if handle.status != "running":
-                continue
-            config = handle.config()
-            image = config.get("image")
-            if isinstance(image, str):
-                running.add(image)
-            elif isinstance(image, dict):
-                ref = image.get("reference") or image.get("_reference")
-                if ref:
-                    running.add(ref)
-
         for img in await Image.list():
-            last_used = img.last_used_at
-            if last_used is None:
-                continue
-            if last_used >= cutoff_ms:
-                continue
-            if img.reference in running:
+            if img.last_used_at is None or img.last_used_at >= cutoff_ms:
                 continue
             with suppress(MicrosandboxError):
-                # Best-effort: e.g. ImageInUseError from a concurrent session.
                 await img.remove()
 
     @staticmethod
-    async def sandboxes(labels: dict[str, str] | None = None) -> list[Any]:
-        sandboxes: list[Any] = []
+    async def sandboxes(labels: dict[str, str] | None = None) -> list[SandboxHandle]:
+        sandboxes: list[SandboxHandle] = []
         cursor = None
         while True:
             page = await Sandbox.list_with(cursor=cursor, labels=labels)
@@ -671,13 +637,13 @@ class SandboxManager:
         elif any(h.name == snap for h in await Snapshot.list()):
             return snap
 
-        tag = self.ensure_image()
+        tag = await self.ensure_image()
 
         base_name = f"base-{self.name}"
         try:
             base = await Sandbox.create(
                 base_name,
-                image=Image.oci(tag, upper_size_mib=DISK_SIZE_MIB),
+                image=Image.oci(tag, root_disk=DISK_SIZE_MIB),
                 memory=MEMORY_MIB,
                 replace=True,
             )
@@ -703,7 +669,7 @@ class SandboxManager:
             handle = await self.find()
             if handle:
                 try:
-                    if handle.status == "running":
+                    if handle.status == SandboxStatus.RUNNING:
                         return await handle.connect(), False
                     return await handle.start(detached=True), True
                 except MicrosandboxError:
@@ -750,7 +716,7 @@ class SandboxManager:
     async def _remove_sandbox(name: str, handle=None) -> None:
         with suppress(MicrosandboxError):
             handle = handle or await Sandbox.get(name)
-            if handle.status == "running":
+            if handle.status == SandboxStatus.RUNNING:
                 await handle.kill()
         with suppress(MicrosandboxError):
             await Sandbox.remove(name)
@@ -766,7 +732,7 @@ class SandboxManager:
 
     async def shutdown(self) -> None:
         handle = await self.find()
-        if handle and handle.status == "running":
+        if handle and handle.status == SandboxStatus.RUNNING:
             with suppress(MicrosandboxError):
                 await handle.request_stop()
 
@@ -960,14 +926,10 @@ class DetectMime(Subcommand):
 async def _handle_bash(req_id: int, args: dict[str, Any]) -> None:
     timeout = args.get("timeout")
     async with sbm.session() as sb:
-        # shell_stream() runs commands via /bin/sh, which turns on POSIX mode,
-        # so invoke bash explicitly
-        handle = await sb.shell_stream(
-            "bash -s", timeout=timeout, stdin=args["command"].encode()
-        )
+        handle = await sb.exec_stream("bash", ["-s"], stdin=args["command"].encode())
         code = 1
         try:
-            # shell_stream() does not enforce the timeout itself (msb 0.6.6),
+            # exec_stream() does not enforce the timeout itself (msb 0.6.17),
             # so apply a client-side deadline and kill the process on expiry.
             async with asyncio.timeout(timeout):
                 async for event in handle:
@@ -981,11 +943,13 @@ async def _handle_bash(req_id: int, args: dict[str, Any]) -> None:
                     elif event.event_type == "exited":
                         code = event.code if event.code is not None else 1
                         break
-        except TimeoutError:
+        except (TimeoutError, asyncio.CancelledError) as error:
             with suppress(MicrosandboxError):
                 await handle.kill()
                 async for _ in handle:  # drain until exited
                     pass
+            if isinstance(error, asyncio.CancelledError):
+                raise
             code = 124
         _write_line({"id": req_id, "done": True, "exitCode": code})
 

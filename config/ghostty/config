@@ -40,3 +40,4 @@ keybind = alt+right=text:\x01L
 macos-non-native-fullscreen = visible-menu
 macos-option-as-alt = left
 macos-titlebar-style = hidden
+selection-word-chars = "\t'\"│┃`|:;,()[]{}<>$"
