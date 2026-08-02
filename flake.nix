@@ -84,6 +84,7 @@
           basepkgs = pkgs.buildEnv {
             name = "basepkgs";
             paths = with pkgs; [
+              age
               b3sum
               bash
               bat

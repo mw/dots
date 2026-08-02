@@ -13,6 +13,7 @@
 pkgs.dockerTools.buildLayeredImage {
   name = "pi-sandbox";
   tag = "latest";
+  includeNixDB = true;
   contents = with linuxPkgs; [
     bash
     cacert

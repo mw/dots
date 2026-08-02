@@ -15,33 +15,33 @@ requirements = [
 
 [[package]]
 name = "annotated-types"
-version = "0.7.0"
+version = "0.8.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ee/67/531ea369ba64dcff5ec9c3402f9f51bf748cec26dde048a2f973a4eea7f5/annotated_types-0.7.0.tar.gz", hash = "sha256:aff07c09a53a08bc8cfccb9c85b05f1aa9a2a6f23728d790723543408344ce89", size = 16081, upload-time = "2024-05-20T21:33:25.928Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5f/56/a8120250d128bed162cd73c76d45f6ef9991f3e068f62a8ee060afa3104a/annotated_types-0.8.0.tar.gz", hash = "sha256:13b2beaad985e05e2d6407ee4c4f35590b11f8d693a258a561055cac8f64cab7", size = 15893, upload-time = "2026-07-23T20:16:13.995Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl", hash = "sha256:1f02e8b43a8fbbc3f3e0d4f0f4bfc8131bcb4eebe8849b8e5c773f3a1c582a53", size = 13643, upload-time = "2024-05-20T21:33:24.1Z" },
+    { url = "https://files.pythonhosted.org/packages/99/91/8acff4f5e50511b911bbccb72b8628a49c68ce14148cd9f6431094859a90/annotated_types-0.8.0-py3-none-any.whl", hash = "sha256:f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0", size = 13427, upload-time = "2026-07-23T20:16:12.938Z" },
 ]
 
 [[package]]
 name = "anyio"
-version = "4.14.1"
+version = "4.14.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "idna" },
     { name = "typing-extensions", marker = "python_full_version < '3.13'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3b/72/5562aabb8dd7181e8e860622a38bea08d17842b99ecd4c91f84ac95251b0/anyio-4.14.1.tar.gz", hash = "sha256:8d648a3544c1a700e3ff78615cd679e4c5c3f149904287e73687b2596963629e", size = 254831, upload-time = "2026-06-24T20:56:06.017Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/61/cc/a381afa6efea9f496eff839d4a6a1aed3bfafc7b3ab4b0d1b243a12573dd/anyio-4.14.2.tar.gz", hash = "sha256:cfa139f3ed1a23ee8f88a145ddb5ac7605b8bbfd8592baacd7ce3d8bb4313c7f", size = 260176, upload-time = "2026-07-12T20:29:07.082Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b0/7b/90df4a0a816d98d6ea26f559d87836d494a2cf1fcf063be67df50a7bcc30/anyio-4.14.1-py3-none-any.whl", hash = "sha256:4e5533c5b8ff0a24f5d7a176cbe6877129cd183893f66b537f8f227d10527d72", size = 124875, upload-time = "2026-06-24T20:56:04.413Z" },
+    { url = "https://files.pythonhosted.org/packages/da/35/f2287558c17e29fafc8ef3daf819bb9834061cfa43bff8014f7df7f63bdc/anyio-4.14.2-py3-none-any.whl", hash = "sha256:9f505dda5ac9f0c8309b5e8bd445a8c2bf7246f3ce950121e45ea15bc41d1494", size = 125813, upload-time = "2026-07-12T20:29:05.763Z" },
 ]
 
 [[package]]
 name = "certifi"
-version = "2026.6.17"
+version = "2026.7.22"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/c9/c7/424b75da314c1045981bd9777432fad05a9e0c69daa4ed7e308bbaffe405/certifi-2026.6.17.tar.gz", hash = "sha256:024c88eeec92ca068db80f02b8b07c9cef7b9fe261d1d535abfd5abd6f6af432", size = 134594, upload-time = "2026-06-17T10:31:07.894Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a3/c2/24167ea9858356b47a87a50d39908bfdb72ceeefe0041586e704e5376b3a/certifi-2026.7.22.tar.gz", hash = "sha256:741e2c3b351ddf169a738da9f2c048608ff7f2c5cc02f1ebc6b118bb090d5d55", size = 138112, upload-time = "2026-07-22T03:35:12.644Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ef/2f/c5464532e965badff2f4c4c1a3a83f5697f0d7c407ed0cda44aaa99bb451/certifi-2026.6.17-py3-none-any.whl", hash = "sha256:2227dcbaafe0d2f59279d1762ddddc37783ed4354594f194ffc31d20f41fc3db", size = 133289, upload-time = "2026-06-17T10:31:06.348Z" },
+    { url = "https://files.pythonhosted.org/packages/0b/a7/71ac2cff56fec219ed242bb11b8efb69fcc4bec75db06fb7bfe35de520e6/certifi-2026.7.22-py3-none-any.whl", hash = "sha256:62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775", size = 136983, upload-time = "2026-07-22T03:35:11.276Z" },
 ]
 
 [[package]]
@@ -92,14 +92,14 @@ wheels = [
 
 [[package]]
 name = "microsandbox"
-version = "0.6.6"
+version = "0.6.8"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/48/65/2ae39dc0696be4c62294a9f75e994ab6e4607cbe17616e8e8a886e5f6e69/microsandbox-0.6.6-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:af13ac4dce2d6e65a5d133a82ded83b8d3d87a12f7509fd4463b6dd066b740a3", size = 33980256, upload-time = "2026-07-07T19:50:31.088Z" },
-    { url = "https://files.pythonhosted.org/packages/53/7a/16f408a001ff95413ba24e6e8d97c0fc3612889b148ecda6fad288c667ed/microsandbox-0.6.6-cp310-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:3fea362038b1b5e089784bcfb15a31cc16fc1fb65ccc75b14ed41bc47c03d10c", size = 35768649, upload-time = "2026-07-07T19:50:36.278Z" },
-    { url = "https://files.pythonhosted.org/packages/5e/fb/53b10d0009c1fc0ec9ec2e6bf105da82be0e63bb9c67559c918ff8b05d54/microsandbox-0.6.6-cp310-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:6d9e1fd907f63076c1dd98320047c8e174a9b582708b58790cf8b2873d95a6e6", size = 32550428, upload-time = "2026-07-07T19:50:41.009Z" },
-    { url = "https://files.pythonhosted.org/packages/30/5f/122938a028194bf83dfa315f58935743af51175609d4e80822da868997d3/microsandbox-0.6.6-cp310-abi3-win_amd64.whl", hash = "sha256:8d1a1792b2bc9621e50f5e63bd736767c6ddd42de167ab6cd98dce6d9f6ab7d8", size = 30137912, upload-time = "2026-07-07T19:50:45.42Z" },
-    { url = "https://files.pythonhosted.org/packages/ac/08/b9e1324f46d2b2c90388d977fef91179f6a432b808ff90d29338474b07bf/microsandbox-0.6.6-cp310-abi3-win_arm64.whl", hash = "sha256:f38aa447b70ed19d3570e27a58a40f9037bc1e6891747b485359dc9f4e536d12", size = 33742966, upload-time = "2026-07-07T19:50:50.523Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/4a/ef6423b7abdff96e7b7d037ae8404b02bcbf87ee86862eb97b3229831ee3/microsandbox-0.6.8-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:fbb801eb7deee8dcb4757c59f97ca052d5c79ccf37c32207745475f23ac3f10f", size = 35350907, upload-time = "2026-07-29T18:53:19.834Z" },
+    { url = "https://files.pythonhosted.org/packages/46/ce/2b710ce121f25c2e2369dcffeb93464e6e22ddebd9fb21338a8b02e7065f/microsandbox-0.6.8-cp310-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:ec05cb4238fb8c85ac4357d5c55569a53f6527681ea36b1542ddb2c34baa530b", size = 37217878, upload-time = "2026-07-29T18:53:23.25Z" },
+    { url = "https://files.pythonhosted.org/packages/ea/28/664c837b0d6ab08c046f53c1cab5425a3ef52b8a6287ee0291df42a82302/microsandbox-0.6.8-cp310-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:ebd096236dfaae0dc84f1e497d7b99b083fbbf030c2d2ad102d0d243a0cce858", size = 34051790, upload-time = "2026-07-29T18:53:26.777Z" },
+    { url = "https://files.pythonhosted.org/packages/85/50/e8610297d29c6a475f9df8109b9c31847d348dc44d5b6e37e5bcfebe0a0f/microsandbox-0.6.8-cp310-abi3-win_amd64.whl", hash = "sha256:315f8f2b3b652cd4ad45427f4a9ca24954d19856522172fb084465af5dc359bf", size = 31678085, upload-time = "2026-07-29T18:53:29.933Z" },
+    { url = "https://files.pythonhosted.org/packages/d5/05/b28c4e079b8ccec3ecbdbb556feecbc5878e4405253621eaea021781fedc/microsandbox-0.6.8-cp310-abi3-win_arm64.whl", hash = "sha256:591b21fa9e29bb7f1b25714699037e6a519bdf20744d4c85e77eacaa3e249585", size = 35167216, upload-time = "2026-07-29T18:53:33.016Z" },
 ]
 
 [[package]]

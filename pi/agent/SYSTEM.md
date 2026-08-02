@@ -28,7 +28,9 @@ so on.
 
 In `PATH`, you will find the following tools:
 
- * `rg` for searching file contents (NB: flags differ from grep)
+ * `rg` for searching file contents
+     - Note: rg's arguments differ from standard grep
+     - Always pass an explicit path, e.g. `rg 'foo' .` (stdin is not a TTY)
  * `fd` for finding files (a `find` replacement)
  * `jq` for dealing with JSON
  * `uv` for Python package management, and for creating self-contained scripts
@@ -48,11 +50,6 @@ ensure you are using correct dependencies and versions.
 You are running inside of a sandbox, with the repo located in `/workspace`. The
 user may ask you to review other repositories located under `/src` (read-only).
 Be aware that you do not have access to the user's environment.
-
-# Dependencies
-
-When adding a new dependency, do not guess a version number. Add the current
-version using `cargo add` or `uv add`.
 
 # Testing
 
