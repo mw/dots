@@ -596,7 +596,7 @@ class SandboxManager:
         cutoff_ms = (time.time() - max_age_days * 86400) * 1000
 
         running: set[str] = set()
-        for handle in await Sandbox.list():
+        for handle in await SandboxManager.sandboxes():
             if handle.status != "running":
                 continue
             config = handle.config()
@@ -621,6 +621,17 @@ class SandboxManager:
                 await img.remove()
 
     @staticmethod
+    async def sandboxes(labels: dict[str, str] | None = None) -> list[Any]:
+        sandboxes: list[Any] = []
+        cursor = None
+        while True:
+            page = await Sandbox.list_with(cursor=cursor, labels=labels)
+            sandboxes.extend(page.sandboxes)
+            if page.next_cursor is None:
+                return sandboxes
+            cursor = page.next_cursor
+
+    @staticmethod
     def dirs_from_config(cfg: dict[str, Any]) -> list[DirEntry]:
         dirs: list[DirEntry] = []
         for m in cfg.get("mounts", []):
@@ -636,7 +647,7 @@ class SandboxManager:
         return dirs
 
     async def load_dirs(self) -> list[DirEntry]:
-        for handle in await Sandbox.list_with(labels={"pi.cwd": self.cwd}):
+        for handle in await self.sandboxes(labels={"pi.cwd": self.cwd}):
             return self.dirs_from_config(handle.config())
         return []
 
@@ -674,7 +685,7 @@ class SandboxManager:
             # Snapshot.create stages the artifact and swaps it in atomically,
             # so force=True is idempotent even when another pi process builds
             # the same snapshot concurrently.
-            await Snapshot.create(base_name, name=snap, force=True)
+            await Snapshot.create(snap, from_sandbox=base_name, force=True)
         finally:
             with suppress(MicrosandboxError):
                 await Sandbox.remove(base_name)
@@ -716,7 +727,7 @@ class SandboxManager:
                 sb = await self._create(snap, volumes)
 
             # Remove stale sandboxes from previous image tags for this cwd.
-            for old in await Sandbox.list_with(labels={"pi.cwd": self.cwd}):
+            for old in await self.sandboxes(labels={"pi.cwd": self.cwd}):
                 if old.name != self.name:
                     await self._remove_sandbox(old.name, handle=old)
 
@@ -726,7 +737,7 @@ class SandboxManager:
     async def _create(self, snap: str, volumes: dict[str, MountConfig]):
         return await Sandbox.create(
             self.name,
-            snapshot=snap,
+            from_snapshot=snap,
             detached=True,
             replace=True,
             memory=MEMORY_MIB,
