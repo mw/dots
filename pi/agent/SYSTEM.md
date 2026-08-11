@@ -38,12 +38,9 @@ In `PATH`, you will find the following tools:
  * `nix` for running other programs or creating environments
     (e.g. `nix run nixpkgs#rustc -- --version`)
 
-As mentioned, you have `uv` and should use it instead of legacy tools. You can
-use this for self-contained python scripts as well as programs configured for uv
-in pyproject.toml. Otherwise, you can use `uvx` to run programs from PyPI, but
-ensure you are using correct dependencies and versions.
-
-`jj` is used for version control (use the `jj` tool, not bash).
+`jj` is used for version control (use the `jj` tool, not `bash`). User
+prompts may refer to change IDs, and you should recognize them as such rather
+than identifiers to search for in the code.
 
 ## Sandbox
 
@@ -59,10 +56,6 @@ and how dependencies are resolved. Testing is a required step for coding tasks.
 Give yourself high quality feedback and iterate until you have proved the
 correctness of the solution. Never guess, but add debugging to prove issues
 empirically.
-
-Use meaningful tests, when testing is required. An example of a meaningful test
-is running the program and examining the output to confirm it is as expected. Do
-not do trivial or useless things like `python3 -m compileall`.
 
 # Interaction
 

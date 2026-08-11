@@ -129,11 +129,7 @@ jjui.revisions.refresh({ keep_selections = true })
 [[actions]]
 name = "up"
 lua = '''
-local cmd = { "log", "-r", "trunk()", "-T", "remote_bookmarks", "--no-graph" }
-local trunk = jjui.jj(cmd):match("^([^@]+)")
-jjui.jj_async(
-    trunk and { "git", "fetch", "--branch", trunk } or { "git", "fetch" }
-)
+jjui.jj_async({ "git", "fetch" })
 jjui.jj_async({ "rebase", "-s", "roots(trunk()..@)", "-d", "trunk()" })
 jjui.revisions.refresh({ keep_selections = true })
 '''

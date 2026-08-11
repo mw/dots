@@ -59,15 +59,6 @@ pi() {
         --config.minimum-release-age=2880 -y \
         @earendil-works/pi-coding-agent "$@"
 }
-codex() {
-    local dir=$(pwd)
-    local override
-    local q='"'
-    printf -v override 'projects={"%s"={trust_level="trusted"}}' "${dir//$q/\"}"
-    pnpm dlx --config.ignore-scripts=true \
-        --config.minimum-release-age=2880 -y \
-        @openai/codex -c "$override" "$@"
-}
 
 stty start ""
 stty stop ""
