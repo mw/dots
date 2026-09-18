@@ -493,7 +493,11 @@ class Dirs(Command):
 
 def manifest() -> dict[str, Any]:
     return {
-        "tools": [t.schema.model_dump(by_alias=True) for t in _tool_registry.values()],
+        "tools": [
+            t.schema.model_dump(by_alias=True)
+            for t in _tool_registry.values()
+            if t.schema.name != "search" or os.environ.get("KAGI_API_KEY")
+        ],
         "commands": [
             c.schema.model_dump(by_alias=True) for c in _command_registry.values()
         ],
@@ -769,16 +773,22 @@ class EventDispatch(Subcommand):
 
         if name == "session_start":
             sandbox_name = sbm.name
-            return {
-                "result": {},
-                "actions": [
+            actions = [
+                {
+                    "type": "set_status",
+                    "key": "microsandbox",
+                    "text": f"sandbox ({sandbox_name})",
+                },
+            ]
+            if not os.environ.get("KAGI_API_KEY"):
+                actions.append(
                     {
-                        "type": "set_status",
-                        "key": "microsandbox",
-                        "text": f"sandbox ({sandbox_name})",
+                        "type": "notify",
+                        "message": "Search disabled: KAGI_API_KEY is not set.",
+                        "level": "warning",
                     }
-                ],
-            }
+                )
+            return {"result": {}, "actions": actions}
         elif name == "before_agent_start":
             tools = [t for t in active_tools if t not in HIDDEN_TOOLS]
             local_line = f"Current working directory: {CWD}"
@@ -808,7 +818,7 @@ class EventDispatch(Subcommand):
             return {
                 "result": {},
                 "actions": [
-                    {"type": "set_status", "key": "microsandbox", "text": None}
+                    {"type": "set_status", "key": "microsandbox", "text": None},
                 ],
             }
         else:

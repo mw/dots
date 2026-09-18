@@ -36,6 +36,8 @@ local function set_tmux_zoom(should_zoom)
     end, 10)
 end
 
+require("jj").init(set_tmux_zoom)
+
 -- plugin configuration
 local plugins = {
     {
@@ -185,7 +187,7 @@ local plugins = {
 
             vim.lsp.completion.enable = function(enable, client_id, bufnr, opts)
                 -- Buffer reload callbacks can outlive the client they were
-                -- created for when a server is suspended from another nvim.
+                -- created for when a server is suspended after losing focus.
                 if enable and not vim.lsp.get_client_by_id(client_id) then
                     return true
                 end
@@ -355,8 +357,6 @@ local plugins = {
                     { "<leader>f", vim.lsp.buf.rename },
                     { ",a", vim.lsp.buf.code_action },
                     { ",r", vim.lsp.buf.references },
-                    { ",N", vim.diagnostic.goto_next },
-                    { ",P", vim.diagnostic.goto_prev },
                     { ",R", "<cmd>lsp restart<cr>" },
                 }
                 for _, v in ipairs(mappings) do
@@ -388,6 +388,7 @@ local plugins = {
             local defaults = {
                 on_attach = on_attach,
                 capabilities = capabilities,
+                exit_timeout = 1000,
             }
             for lsp, opts in pairs(servers) do
                 vim.lsp.config[lsp] = vim.tbl_extend("force", defaults, opts)
@@ -407,77 +408,10 @@ local plugins = {
                 },
             })
 
-            -- LSP servers can use a lot of memory. Don't run more than one
-            -- instance of an LSP server across different nvim instances. When
-            -- attaching LSP servers, indicate to the previous nvim instance
-            -- running that server to shut its server down.
+            -- LSP servers can use a lot of memory. Schedule them to shut down 3
+            -- minutes after losing focus.
             local names = vim.tbl_keys(servers)
-            local servername = vim.v.servername
-            local pid = vim.fn.getpid()
-
-            local function lease_path(name)
-                local data_dir = vim.fn.stdpath("data")
-                return vim.fs.joinpath(data_dir, "nvim-lsp-" .. name)
-            end
-
-            local function read_lease(name)
-                local ok, lines = pcall(vim.fn.readfile, lease_path(name))
-                if not ok or #lines < 2 then
-                    return
-                end
-                local owner_pid = tonumber(lines[1])
-                local owner_servername = lines[2]
-                if not owner_pid or owner_servername == "" then
-                    return
-                end
-                return owner_pid, owner_servername
-            end
-
-            local function claim(name)
-                local owner_pid, owner_servername = read_lease(name)
-                if
-                    owner_pid
-                    and owner_pid ~= pid
-                    and owner_servername ~= servername
-                    and vim.uv.kill(owner_pid, 0) == 0
-                then
-                    local ok, chan = pcall(
-                        vim.fn.sockconnect,
-                        "pipe",
-                        owner_servername,
-                        { rpc = true }
-                    )
-                    if ok and chan > 0 then
-                        pcall(
-                            vim.rpcrequest,
-                            chan,
-                            "nvim_exec_lua",
-                            "_G.lease_suspend_lsp(...)",
-                            { name }
-                        )
-                        vim.fn.chanclose(chan)
-                    end
-                end
-                vim.fn.writefile(
-                    { tostring(pid), servername },
-                    lease_path(name)
-                )
-            end
-
-            local function enable_all()
-                for _, name in ipairs(names) do
-                    if not vim.lsp.is_enabled(name) then
-                        vim.lsp.enable(name)
-                    end
-                end
-            end
-
-            _G.lease_suspend_lsp = function(name)
-                if vim.lsp.is_enabled(name) then
-                    vim.lsp.enable(name, false)
-                end
-            end
-
+            local timer
             local group =
                 vim.api.nvim_create_augroup("lsp_focus", { clear = true })
             vim.api.nvim_create_autocmd(
@@ -485,36 +419,32 @@ local plugins = {
                 {
                     group = group,
                     callback = function()
-                        enable_all()
+                        if timer then
+                            vim.fn.timer_stop(timer)
+                            timer = nil
+                        end
+                        for _, name in ipairs(names) do
+                            if not vim.lsp.is_enabled(name) then
+                                vim.lsp.enable(name)
+                            end
+                        end
                     end,
                 }
             )
-            vim.api.nvim_create_autocmd("LspAttach", {
+            vim.api.nvim_create_autocmd({ "FocusLost", "VimSuspend" }, {
                 group = group,
-                callback = function(args)
-                    local client = vim.lsp.get_client_by_id(args.data.client_id)
-                    if client then
-                        claim(client.name)
+                callback = function()
+                    if not timer then
+                        timer = vim.fn.timer_start(3 * 60 * 1000, function()
+                            timer = nil
+                            vim.lsp.enable(names, false)
+                        end)
                     end
                 end,
             })
         end,
     },
     { "https://github.com/machakann/vim-sandwich" },
-    {
-        "https://github.com/lewis6991/gitsigns.nvim",
-        function()
-            require("gitsigns").setup({
-                current_line_blame_opts = {
-                    virt_text_pos = "eol",
-                },
-            })
-
-            map("n", "<leader>B", "<cmd>Gitsigns blame<cr>")
-            map("n", "<M-b>", "<cmd>Gitsigns toggle_current_line_blame<cr>")
-            map("n", "R", "<cmd>Gitsigns setqflist<cr>")
-        end,
-    },
     {
         "https://github.com/stevearc/quicker.nvim",
         function()
@@ -524,10 +454,23 @@ local plugins = {
             end, { desc = "Toggle quickfix" })
             map("n", ",n", "<cmd>cnext<cr>")
             map("n", ",p", "<cmd>cprev<cr>")
+            map(
+                "n",
+                ",[",
+                "<cmd>silent! colder<cr>",
+                { desc = "Older quickfix list" }
+            )
+            map(
+                "n",
+                ",]",
+                "<cmd>silent! cnewer<cr>",
+                { desc = "Newer quickfix list" }
+            )
             vim.keymap.set("n", ",l", function()
                 quicker.toggle({ loclist = true })
             end, { desc = "Toggle loclist" })
             quicker.setup({
+                opts = { wrap = true },
                 keys = {
                     {
                         ">",
@@ -565,7 +508,6 @@ local plugins = {
                 "diff",
                 "dockerfile",
                 "git_config",
-                "git_rebase",
                 "gitcommit",
                 "gitignore",
                 "go",
@@ -752,7 +694,7 @@ local plugins = {
             map("n", ",t", function()
                 snacks.picker.lsp_workspace_symbols()
             end, { desc = "LSP Workspace Symbols" })
-            map("n", ",R", function()
+            map("n", "<leader>R", function()
                 snacks.picker.resume()
             end, { desc = "Resume" })
             map("n", ",<cr>", function()
@@ -777,12 +719,6 @@ local plugins = {
             map("n", "<leader>sm", function()
                 snacks.picker.marks()
             end, { desc = "Marks" })
-            map("n", "<leader>sM", function()
-                snacks.picker.man()
-            end, { desc = "Man Pages" })
-            map("n", "<leader>sl", function()
-                snacks.picker.loclist()
-            end, { desc = "Location List" })
             map("n", "<leader>sq", function()
                 snacks.picker.qflist()
             end, { desc = "Quickfix List" })
@@ -795,15 +731,6 @@ local plugins = {
             map("n", "<leader>sh", function()
                 snacks.picker.help()
             end, { desc = "Help Pages" })
-            map("n", "<leader>Gs", function()
-                snacks.picker.git_status()
-            end, { desc = "Git Status" })
-            map("n", "<leader>GS", function()
-                snacks.picker.git_stash()
-            end, { desc = "Git Stash" })
-            map("n", "<leader>Gd", function()
-                snacks.picker.git_diff()
-            end, { desc = "Git Diff (Hunks)" })
             map("n", "<leader>W", function()
                 snacks.picker.diagnostics()
             end, { desc = "LSP Diagnostics" })
@@ -819,24 +746,6 @@ local plugins = {
                     end)
                 end
             end
-            map("n", "<leader>Gb", function()
-                snacks.picker.git_branches()
-            end, { desc = "Git Branches" })
-            map("n", "<leader>Gl", function()
-                snacks.picker.git_log({
-                    confirm = show_git_diff_commit,
-                })
-            end, { desc = "Git Log" })
-            map("n", "<leader>GL", function()
-                snacks.picker.git_log_line({
-                    confirm = show_git_diff_commit,
-                })
-            end, { desc = "Git Log Line" })
-            map("n", "<leader>Gf", function()
-                snacks.picker.git_log_file({
-                    confirm = show_git_diff_commit,
-                })
-            end, { desc = "Git Log File" })
         end,
     },
     {
@@ -884,6 +793,19 @@ local plugins = {
                     lualine_x = {
                         {
                             function()
+                                local qf =
+                                    vim.fn.getqflist({ nr = 0, winid = 0 })
+                                if qf.winid == 0 then
+                                    return ""
+                                end
+                                local total = vim.fn.getqflist({ nr = "$" }).nr
+                                return string.format("%d/%d", qf.nr, total)
+                            end,
+                            icon = "",
+                            color = "QuickFixLineNr",
+                        },
+                        {
+                            function()
                                 local col = vim.fn.col(".")
                                 if col > 80 then
                                     return tostring("󰦪")
@@ -893,9 +815,8 @@ local plugins = {
                             color = { fg = "#f7768e" },
                         },
                         { "filetype", icon_only = true },
-                        "diagnostics",
                     },
-                    lualine_y = { { "branch", icon = "" } },
+                    lualine_y = { "diagnostics" },
                     lualine_z = {},
                 },
                 inactive_sections = {},
@@ -1038,6 +959,9 @@ end, { expr = true })
 map({ "v", "n" }, "<space>", ":nohl<cr>zz")
 
 map("n", "<leader>n", "<cmd>silent! set invnumber number?<cr>")
+map("n", "<leader>y", function()
+    vim.fn.setreg("+", vim.fn.expand("%:."), "v")
+end, { desc = "Copy relative path" })
 map("n", ",w", "<cmd>silent! set invwrap wrap?<cr>")
 
 map("n", "<c-z>", "<cmd>terminal<cr>i")

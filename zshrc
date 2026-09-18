@@ -163,7 +163,8 @@ if command -v direnv &> /dev/null; then
 fi
 if command -v yubikey-agent &> /dev/null; then
     export SSH_AUTH_SOCK="$HOME/.ssh/yubikey-agent.sock"
-    if ! [[ -S "$SSH_AUTH_SOCK" ]] || ! pgrep -qx yubikey-agent; then
+    ssh-add -l &> /dev/null
+    if (( $? == 2 )); then
         yubikey-agent -l "$SSH_AUTH_SOCK" &> /dev/null &!
     fi
 fi
