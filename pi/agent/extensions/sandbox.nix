@@ -2,8 +2,8 @@
 # guest VM runs natively. The image is assembled with host-platform tools, so
 # no Linux builder is needed on macOS: the Linux packages in `contents` are
 # substituted from the binary cache rather than built. Shim files (/bin/sh,
-# /usr/bin/env, /etc/passwd, certs) are created in extraCommands for the same
-# reason -- dockerTools' runCommand-based helpers would need a Linux builder.
+# /usr/bin/env, the ELF loader, /etc/passwd, certs) are created in extraCommands
+# for the same reason -- dockerTools' helpers would need a Linux builder.
 { system ? builtins.currentSystem
 , linuxSystem ? builtins.replaceStrings [ "darwin" ] [ "linux" ] system
 , pkgs ? import <nixpkgs> { inherit system; }
@@ -25,8 +25,10 @@ pkgs.dockerTools.buildLayeredImage {
     gnused
     jq
     nix
+    nix-ld
     python3
     ripgrep
+    stdenv.cc.cc.lib
     uv
   ];
   extraCommands = ''
@@ -38,11 +40,16 @@ pkgs.dockerTools.buildLayeredImage {
     echo "build-users-group =" >> etc/nix/nix.conf
     echo "root:x:0:0:root:/root:/bin/bash" > etc/passwd
     echo "root:x:0:" > etc/group
+    ldpath="$(cat ${linuxPkgs.nix-ld}/nix-support/ldpath)"
+    mkdir -p ".$(dirname "$ldpath")"
+    ln -s ${linuxPkgs.nix-ld}/libexec/nix-ld ".$ldpath"
   '';
   config = {
     Cmd = [ "/bin/bash" ];
     Env = [
       "NIX_SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt"
+      "NIX_LD=${linuxPkgs.stdenv.cc.bintools.dynamicLinker}"
+      "NIX_LD_LIBRARY_PATH=${linuxPkgs.lib.makeLibraryPath [ linuxPkgs.stdenv.cc.cc.lib ]}"
       # Don't share uv environment with the host
       "UV_PROJECT_ENVIRONMENT=/root/.venv"
     ];

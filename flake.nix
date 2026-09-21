@@ -16,7 +16,7 @@
             inherit system;
           };
           localePkgs =
-            if pkgs.stdenv.isDarwin then
+            if pkgs.stdenv.hostPlatform.isDarwin then
               [ pkgs.darwin.locale ]
             else
               [ pkgs.glibcLocales pkgs.locale ];
@@ -67,14 +67,14 @@
               installPhase = ''
                 install -Dm755 microsandbox/_bundled/bin/msb $out/bin/msb
                 install -Dm755 microsandbox/_bundled/lib/* -t $out/lib
-              '' + pkgs.lib.optionalString pkgs.stdenv.isLinux ''
+              '' + pkgs.lib.optionalString pkgs.stdenv.hostPlatform.isLinux ''
                 patchelf \
                   --set-interpreter "$(cat ${pkgs.stdenv.cc}/nix-support/dynamic-linker)" \
                   --set-rpath ${pkgs.libcap_ng}/lib \
                   $out/bin/msb
               '';
 
-              postFixup = pkgs.lib.optionalString pkgs.stdenv.isDarwin ''
+              postFixup = pkgs.lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ''
                 /usr/bin/codesign --force --sign - \
                   --entitlements ${entitlements} \
                   $out/bin/msb
