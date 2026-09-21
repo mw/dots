@@ -30,7 +30,7 @@ pkgs.dockerTools.buildLayeredImage {
     uv
   ];
   extraCommands = ''
-    mkdir -p bin usr/bin etc/nix etc/ssl/certs
+    mkdir -p bin usr/bin etc/nix etc/ssl/certs root
     ln -sf ${linuxPkgs.bash}/bin/bash bin/sh
     ln -sf ${linuxPkgs.coreutils}/bin/env usr/bin/env
     ln -sf ${linuxPkgs.cacert}/etc/ssl/certs/ca-bundle.crt etc/ssl/certs/ca-bundle.crt
@@ -43,6 +43,8 @@ pkgs.dockerTools.buildLayeredImage {
     Cmd = [ "/bin/bash" ];
     Env = [
       "NIX_SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt"
+      # Don't share uv environment with the host
+      "UV_PROJECT_ENVIRONMENT=/root/.venv"
     ];
   };
 }

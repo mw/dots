@@ -29,7 +29,8 @@ so on.
 In `PATH`, you will find the following tools:
 
  * `rg` for searching file contents
-     - Note: rg's arguments differ from standard grep
+     - NB: `-r` is `--replace`, not "recursive": `rg -rn`
+       displays matches as "n". Use `-n` for line numbers.
      - Always pass an explicit path, e.g. `rg 'foo' .` (stdin is not a TTY)
  * `fd` for finding files (a `find` replacement)
  * `jq` for dealing with JSON
