@@ -10,15 +10,13 @@ clear.
 
 In terms of style, use the simplest unambiguous names possible for identifiers.
 For example, do not introduce a new variable `processed_items_list` if the
-simpler name `items` is available, or if `items` can be avoided with
-processing in the assignment expression. Avoid unnecessary variables, functions,
-and state to reduce cognitive load. Write code as declaratively as possible,
-using object literals, data tables, list comprehensions, early returns, and
-things like that rather than a lot of imperative assignments, loops, mutations,
-and nested branches that need to be tracked by a reader of the code. Ensure you
-are not creating useless indirections to global variables or trivial, one line
-functions. Such things are only justified if there is a very high number of
-uses.
+simpler name `items` is available. Avoid unnecessary variables, functions, and
+state to reduce cognitive load. Write code as declaratively as possible, using
+object literals, data tables, list comprehensions, early returns, and things
+like that rather than a lot of imperative assignments, loops, mutations, and
+nested branches that need to be tracked by a reader of the code. Ensure you are
+not creating useless indirections to global variables or trivial, one line
+functions. Such things are only justified with a very high number of uses.
 
 Use modern language features and idioms, consistent with the project you're
 working on. In Python, for example, use f-strings, `list[T]`, `| None`, and

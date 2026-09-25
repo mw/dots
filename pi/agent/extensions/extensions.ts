@@ -20,6 +20,7 @@ import {
   type WriteOperations,
 } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
+import { createAgentTool } from "./lib/agent.ts";
 
 const SCRIPT = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -93,27 +94,38 @@ class PyProcess {
     method: string,
     params?: unknown,
     onData?: (data: Buffer) => void,
-  ): { id: number; promise: Promise<any> } {
+    signal?: AbortSignal,
+  ): Promise<any> {
+    signal?.throwIfAborted();
     const id = this.nextId++;
-    const promise = new Promise<any>((resolve, reject) => {
+    let promise = new Promise<any>((resolve, reject) => {
       this.pending.set(id, { resolve, reject, onData });
     });
     this.child.stdin.write(JSON.stringify({ id, method, params }) + "\n");
-    return { id, promise };
+    if (signal) {
+      const abort = () =>
+        this.child.stdin.write(JSON.stringify({ cancel: id }) + "\n");
+      signal.addEventListener("abort", abort, { once: true });
+      promise = promise
+        .then((result) => {
+          signal.throwIfAborted();
+          return result;
+        })
+        .finally(() => signal.removeEventListener("abort", abort));
+    }
+    return promise;
   }
 
-  private cancel(id: number) {
-    this.child.stdin.write(JSON.stringify({ cancel: id }) + "\n");
-  }
-
-  requestJson(method: string, params?: unknown): Promise<any> {
-    return this.send(method, params).promise;
+  requestJson(
+    method: string,
+    params?: unknown,
+    signal?: AbortSignal,
+  ): Promise<any> {
+    return this.send(method, params, undefined, signal);
   }
 
   requestBinary(method: string, params: unknown): Promise<Buffer> {
-    return this.send(method, params).promise.then((r) =>
-      Buffer.from(r, "base64"),
-    );
+    return this.send(method, params).then((r) => Buffer.from(r, "base64"));
   }
 
   requestBash(
@@ -122,13 +134,7 @@ class PyProcess {
     signal?: AbortSignal,
     timeout?: number,
   ): Promise<{ exitCode: number | null }> {
-    const { id, promise } = this.send("bash_exec", { command, timeout }, onData);
-    if (signal) {
-      const onAbort = () => this.cancel(id);
-      signal.addEventListener("abort", onAbort, { once: true });
-      promise.finally(() => signal.removeEventListener("abort", onAbort));
-    }
-    return promise;
+    return this.send("bash_exec", { command, timeout }, onData, signal);
   }
 
   shutdown() {
@@ -137,7 +143,7 @@ class PyProcess {
 }
 
 function textResult(text: string) {
-  return { content: [{ type: "text" as const, text }] };
+  return { content: [{ type: "text" as const, text }], details: undefined };
 }
 
 function executeActions(
@@ -161,7 +167,11 @@ function proxyBashOps(py: PyProcess): BashOperations {
     exec: (
       command: string,
       _cwd: string,
-      opts: { onData: (d: Buffer) => void; signal?: AbortSignal; timeout?: number },
+      opts: {
+        onData: (d: Buffer) => void;
+        signal?: AbortSignal;
+        timeout?: number;
+      },
     ) => py.requestBash(command, opts.onData, opts.signal, opts.timeout),
   };
 }
@@ -169,7 +179,9 @@ function proxyBashOps(py: PyProcess): BashOperations {
 function proxyReadOps(py: PyProcess): ReadOperations {
   return {
     readFile: (p: string) => py.requestBinary("read_file", { path: p }),
-    access: async (p: string) => { await py.requestJson("access", { path: p }); },
+    access: async (p: string) => {
+      await py.requestJson("access", { path: p });
+    },
     detectImageMimeType: async (p: string) => {
       try {
         return (await py.requestJson("detect_mime", { path: p })) || null;
@@ -185,7 +197,9 @@ function proxyWriteOps(py: PyProcess): WriteOperations {
     writeFile: async (p: string, content: string) => {
       await py.requestJson("write_file", { path: p, content });
     },
-    mkdir: async (dir: string) => { await py.requestJson("mkdir", { path: dir }); },
+    mkdir: async (dir: string) => {
+      await py.requestJson("mkdir", { path: dir });
+    },
   };
 }
 
@@ -195,7 +209,9 @@ function proxyEditOps(py: PyProcess): EditOperations {
     writeFile: async (p: string, content: string) => {
       await py.requestJson("write_file", { path: p, content });
     },
-    access: async (p: string) => { await py.requestJson("access", { path: p }); },
+    access: async (p: string) => {
+      await py.requestJson("access", { path: p });
+    },
   };
 }
 
@@ -232,13 +248,10 @@ export default async function (pi: ExtensionAPI) {
       parameters: tool.parameters,
       executionMode: tool.executionMode,
       // Show string arguments next to the tool name in the header.
-      renderCall(
-        args: Record<string, unknown>,
-        theme: Theme,
-        context: { lastComponent?: Text },
-      ) {
-        const text = context.lastComponent ?? new Text("", 0, 0);
-        const summary = Object.values(args)
+      renderCall(args, theme, context) {
+        const text =
+          (context.lastComponent as Text | undefined) ?? new Text("", 0, 0);
+        const summary = Object.values(args as Record<string, unknown>)
           .flat()
           .filter((v) => typeof v === "string")
           .join(" ");
@@ -248,22 +261,22 @@ export default async function (pi: ExtensionAPI) {
         );
         return text;
       },
-      async execute(_id, params, _signal, _onUpdate, ctx) {
+      async execute(_id, params, signal, _onUpdate, ctx) {
         try {
-          if (tool.confirm) {
-            const confirmMsg = await py.requestJson("tool_confirm", {
-              name: tool.name,
-              params,
-            });
-            if (confirmMsg && !(await ctx.ui.confirm(tool.label, confirmMsg))) {
-              return textResult("Denied by user.");
-            }
-          }
-          const r = await py.requestJson("tool", { name: tool.name, params });
+          const r = await py.requestJson(
+            "tool",
+            { name: tool.name, params },
+            signal,
+          );
           executeActions(r.actions, pi, ctx);
           return textResult(r.text);
         } catch (e) {
-          return textResult(`${tool.name} failed: ${e instanceof Error ? e.message : e}`);
+          return {
+            ...textResult(
+              `${tool.name} failed: ${e instanceof Error ? e.message : e}`,
+            ),
+            isError: true,
+          };
         }
       },
     });
@@ -280,7 +293,10 @@ export default async function (pi: ExtensionAPI) {
           if (r.text) ctx.ui.notify(r.text, "info");
           if (r.error) ctx.ui.notify(`${cmd.name} failed: ${r.error}`, "error");
         } catch (e) {
-          ctx.ui.notify(`${cmd.name} failed: ${e instanceof Error ? e.message : e}`, "error");
+          ctx.ui.notify(
+            `${cmd.name} failed: ${e instanceof Error ? e.message : e}`,
+            "error",
+          );
         }
       },
     });
@@ -290,6 +306,15 @@ export default async function (pi: ExtensionAPI) {
   overrideBuiltIn(createReadTool, () => proxyReadOps(py));
   overrideBuiltIn(createWriteTool, () => proxyWriteOps(py));
   overrideBuiltIn(createEditTool, () => proxyEditOps(py));
+  pi.registerTool(
+    createAgentTool([
+      "bash",
+      "read",
+      "write",
+      "edit",
+      ...m.tools.map((tool: { name: string }) => tool.name),
+    ]),
+  );
 
   pi.on("session_start", async (_event, ctx) => {
     const r = await py.requestJson("event", {
@@ -298,6 +323,7 @@ export default async function (pi: ExtensionAPI) {
       activeTools: [],
     });
     executeActions(r.actions, pi, ctx);
+    pi.setActiveTools([...pi.getActiveTools(), "codemode"]);
   });
 
   pi.on("before_agent_start", async (event, ctx) => {

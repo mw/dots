@@ -21,6 +21,7 @@ pkgs.dockerTools.buildLayeredImage {
     curl
     diffutils
     fd
+    file
     gnugrep
     gnused
     jq

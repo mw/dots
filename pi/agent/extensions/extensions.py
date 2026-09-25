@@ -91,8 +91,6 @@ class ToolSchema(BaseModel):
     description: str
     parameters: dict[str, Any]
     execution_mode: str = "parallel"
-    confirm: bool = False
-    """Whether tool calls must be gated on a tool_confirm check."""
 
 
 class CommandSchema(BaseModel):
@@ -104,10 +102,6 @@ class CommandSchema(BaseModel):
 
 class Tool:
     schema: ToolSchema
-
-    def confirm(self, params: dict[str, Any]) -> str | None:
-        """Return a confirmation message to prompt the user, or None."""
-        return None
 
     async def handle(self, params: dict[str, Any]) -> dict[str, Any]:
         raise NotImplementedError
@@ -358,10 +352,8 @@ class Jj(Tool):
         name="jj",
         label="Jujutsu",
         description=(
-            "Run a jj (Jujutsu) command on the host, outside the "
-            "sandbox. Use this instead of running jj via bash, since "
-            "jj workspaces do not work inside the sandbox. The user "
-            "is asked to confirm `jj util` and `jj run` invocations."
+            "Run a jj (Jujutsu) command. Use this instead of running jj via bash. "
+            "The command must be first, followed by the arguments."
         ),
         parameters={
             "type": "object",
@@ -375,17 +367,19 @@ class Jj(Tool):
             },
             "required": ["args"],
         },
-        confirm=True,
     )
-
-    def confirm(self, params: dict[str, Any]) -> str | None:
-        args = params["args"]
-        if args[0] in ("util", "run"):
-            return f"Allow running on the host: jj {shlex.join(args)}?"
-        return None
 
     async def handle(self, params: dict[str, Any]) -> dict[str, Any]:
         args = params["args"]
+        if args[0].startswith("-"):
+            return {"text": "jj command must be first."}
+        if args[0] in ("util", "run", "config", "bisect"):
+            return {"text": f"jj command {args[0]!r} is not supported."}
+        for arg in args[1:]:
+            if arg == "--":
+                break
+            if arg.partition("=")[0] in ("--config", "--config-file", "--tool"):
+                return {"text": f"jj argument {arg!r} is not supported."}
         result = subprocess.run(
             ["jj", *args],
             capture_output=True,
@@ -826,17 +820,6 @@ class EventDispatch(Subcommand):
 
 
 @register_subcommand
-class ToolConfirm(Subcommand):
-    name = "tool_confirm"
-
-    async def handle(self, args: dict[str, Any]) -> str | None:
-        tool = _tool_registry.get(args["name"])
-        if tool is None:
-            raise ValueError(f"Unknown tool: {args['name']}")
-        return tool.confirm(args.get("params", {}))
-
-
-@register_subcommand
 class ToolDispatch(Subcommand):
     name = "tool"
 
@@ -977,9 +960,6 @@ async def _handle_request(req_id: int, method: str, params: dict[str, Any]) -> N
 
         result = await sub.handle(params)
         _write_line({"id": req_id, "result": result})
-    except asyncio.CancelledError:
-        _write_line({"id": req_id, "done": True, "exitCode": None})
-        raise
     except Exception as e:
         _write_line({"id": req_id, "error": str(e)})
 
@@ -995,6 +975,12 @@ async def serve() -> None:
 
     tasks: dict[int, asyncio.Task] = {}
 
+    def finish(req_id: int, task: asyncio.Task) -> None:
+        tasks.pop(req_id, None)
+        # A task cancelled before it starts never enters _handle_request.
+        if task.cancelled():
+            _write_line({"id": req_id, "done": True, "exitCode": None})
+
     while True:
         line = await reader.readline()
         if not line:
@@ -1003,7 +989,7 @@ async def serve() -> None:
         msg = json.loads(line)
 
         if "cancel" in msg:
-            task = tasks.pop(msg["cancel"], None)
+            task = tasks.get(msg["cancel"])
             if task:
                 task.cancel()
             continue
@@ -1014,7 +1000,7 @@ async def serve() -> None:
 
         task = asyncio.create_task(_handle_request(req_id, method, params))
         tasks[req_id] = task
-        task.add_done_callback(lambda t, rid=req_id: tasks.pop(rid, None))
+        task.add_done_callback(functools.partial(finish, req_id))
 
     for task in tasks.values():
         task.cancel()
