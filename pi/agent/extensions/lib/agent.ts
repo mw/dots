@@ -7,8 +7,8 @@ export function createAgentTool(names: string[]): ToolDefinition {
     name: "agent",
     label: "Agent",
     description:
-      "Delegate work to a subagent. Use for large tasks involving many "
-      "separate instances or files. Orchestrate subagents with codemode, "
+      "Delegate work to a subagent. Use for large tasks involving many " +
+      "separate instances or files. Orchestrate subagents with codemode, " +
       "bounding concurrency and requesting from each a concise summary. ",
     parameters: {
       type: "object",
@@ -45,8 +45,8 @@ export function createAgentTool(names: string[]): ToolDefinition {
           thinkingLevel: ctx.thinkingLevel,
           systemPrompt:
             ctx.getSystemPrompt() +
-            "\n\nNOTE: You are a subagent being invoked non-interactively. "
-            "If the task can be completed as specified, complete it without "
+            "\n\nNOTE: You are a subagent being invoked non-interactively. " +
+            "If the task can be completed as specified, complete it without " +
             "stopping, and return the requested summary.",
           tools: ctx.tools
             .filter((tool) => names.includes(tool.name))
